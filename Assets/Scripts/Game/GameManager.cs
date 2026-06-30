@@ -1,12 +1,13 @@
 using System;
 using UnityEngine;
+using CurlingRoyale.Combat;
 
 namespace CurlingRoyale.Game
 {
     /// <summary>
     /// Управляет состоянием матча. Singleton — доступ через GameManager.Instance.
     /// FSM: Menu → MatchStart → InProgress → MatchEnd → Menu.
-    /// События для UI подписки.
+    /// Автоматически считает живых StoneCombat в сцене и завершает матч когда остался 1.
     /// </summary>
     public class GameManager : MonoBehaviour
     {
@@ -24,18 +25,17 @@ namespace CurlingRoyale.Game
         [Tooltip("Длительность фазы одновременной зарядки перед разгоном (сек).")]
         [Min(0f)] public float chargePhaseDuration = 5f;
 
-        [Tooltip("Сколько камней должно быть в матче.")]
-        [Min(2)] public int expectedStoneCount = 8;
-
         public MatchState State { get; private set; } = MatchState.Menu;
         public float PhaseTimeRemaining { get; private set; }
+        public int AliveCount { get; private set; }
 
         public event Action<MatchState> onStateChanged;
-        public event Action<float> onPhaseTick;     // каждый кадр во время InProgress, значение — оставшееся время фазы
-        public event Action<int> onAliveCountChanged; // (число живых камней)
+        public event Action<float> onPhaseTick;
+        public event Action<int> onAliveCountChanged;
 
-        private int aliveCountCache = -1;
-        private float lastTickTime;
+        private float aliveCountCheckInterval = 0.25f; // проверяем 4 раза в секунду
+        private float nextAliveCheckTime;
+        private bool hasStarted = false;
 
         void Awake()
         {
@@ -56,61 +56,79 @@ namespace CurlingRoyale.Game
 
         public void StartMatch()
         {
+            hasStarted = true;
             ChangeState(MatchState.MatchStart);
             PhaseTimeRemaining = chargePhaseDuration;
-            lastTickTime = Time.time;
-            // TODO: фаза "все готовятся" — зарядка
             Invoke(nameof(EnterInProgress), chargePhaseDuration);
         }
 
         public void EndMatch(int winnerId = -1)
         {
             ChangeState(MatchState.MatchEnd);
-            // TODO: показать экран результатов
+            // PhaseTimeRemaining = 0; // можно показать экран результатов с таймером
         }
 
         public void ReturnToMenu()
         {
+            hasStarted = false;
             ChangeState(MatchState.Menu);
         }
 
         private void EnterInProgress()
         {
             ChangeState(MatchState.InProgress);
-            PhaseTimeRemaining = 0f; // в этой фазе считаем не время, а число живых
+            PhaseTimeRemaining = 0f;
+            nextAliveCheckTime = Time.time;
         }
 
-        // ─── Тик (вызывается из боевой системы или ежекадрово) ──────
-
-        /// <summary>
-        /// Сообщить GameManager-у текущее число живых камней.
-        /// Если остался 1 — матч окончен.
-        /// </summary>
-        public void ReportAliveCount(int count)
-        {
-            if (count == aliveCountCache) return;
-            aliveCountCache = count;
-            onAliveCountChanged?.Invoke(count);
-
-            if (State == MatchState.InProgress && count <= 1)
-            {
-                EndMatch();
-            }
-        }
+        // ─── Тик ─────────────────────────────────────────────────────
 
         void Update()
         {
+            // Фаза одновременной зарядки: обратный отсчёт до разгона.
             if (State == MatchState.MatchStart && PhaseTimeRemaining > 0f)
             {
-                PhaseTimeRemaining -= Time.deltaTime;
+                PhaseTimeRemaining = Mathf.Max(0f, chargePhaseDuration - (Time.time - lastInvokeTime));
                 onPhaseTick?.Invoke(PhaseTimeRemaining);
             }
+
+            // В активной фазе — считаем живых камней на сцене.
+            if (State == MatchState.InProgress && Time.time >= nextAliveCheckTime)
+            {
+                CountAliveStones();
+                nextAliveCheckTime = Time.time + aliveCountCheckInterval;
+            }
         }
+
+        private float lastInvokeTime;
 
         private void ChangeState(MatchState newState)
         {
             State = newState;
+            if (newState == MatchState.MatchStart) lastInvokeTime = Time.time;
             onStateChanged?.Invoke(newState);
+        }
+
+        private void CountAliveStones()
+        {
+            // Пересчитываем с небольшой задержкой — не каждый кадр, чтобы не нагружать.
+            // FindObjectsByType — дорогая операция, но раз в 0.25 сек на 8 объектах это терпимо.
+            StoneCombat[] stones = FindObjectsByType<StoneCombat>(FindObjectsSortMode.None);
+            int alive = 0;
+            for (int i = 0; i < stones.Length; i++)
+            {
+                if (stones[i] != null && !stones[i].IsDead) alive++;
+            }
+
+            if (alive == AliveCount) return;
+            AliveCount = alive;
+            onAliveCountChanged?.Invoke(alive);
+
+            // Последний выжил — матч окончен. 0 — крайний случай, тоже финиш.
+            if (alive <= 1 && hasStarted)
+            {
+                EndMatch();
+            }
         }
 
         // ─── Утилиты для UI ──────────────────────────────────────────
@@ -119,3 +137,4 @@ namespace CurlingRoyale.Game
             Instance != null && (Instance.State == MatchState.MatchStart || Instance.State == MatchState.InProgress);
     }
 }
+
