@@ -14,6 +14,17 @@ namespace CurlingRoyale.Combat
         [Tooltip("ScriptableObject с диапазонами урона. Создать через Create → Curling Royale → Damage Config.")]
         [SerializeField] private DamageConfig damageConfig;
 
+        [Header("Визуал (поворот в сторону движения)")]
+        [Tooltip("Если true — камень визуально поворачивается (Z-rotation) в сторону velocity.")]
+        public bool rotateTowardsVelocity = true;
+
+        [Tooltip("Смещение между направлением спрайта 'вперёд' и velocity=+X. " +
+                 "Если спрайт нарисован лицом вверх — поставь -90 (тогда velocity=+X даёт rotation 0).")]
+        public float spriteForwardOffsetDegrees = -90f;
+
+        [Tooltip("Порог скорости ниже которого rotation не обновляется (стоящий камень не дрожит).")]
+        [Min(0f)] public float rotationVelocityThreshold = 0.2f;
+
         [Header("События (для UI и VFX)")]
         public UnityEvent<int, int> onHealthChanged = new UnityEvent<int, int>(); // (current, max)
         public UnityEvent onDamageTaken = new UnityEvent();
@@ -30,28 +41,28 @@ namespace CurlingRoyale.Combat
         void Awake()
         {
             rb = GetComponent<Rigidbody2D>();
-            // Continuous collision detection — без этого быстрые камни тоннелируют
-            // сквозь друг друга и сквозь границу арены.
             rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
-            // Усиленное торможение, чтобы камни останавливались за ~2-3 секунды.
             rb.linearDamping = 2.5f;
-            // Замораживаем вращение — иначе HP-бар (child) крутится вместе с камнем.
-            rb.constraints = RigidbodyConstraints2D.FreezeRotation;
             CurrentHP = MaxHP;
         }
 
         void Start()
         {
-            // Оповестить подписчиков о начальном HP (HP-бар рисуется сразу).
             onHealthChanged?.Invoke(CurrentHP, MaxHP);
+        }
+
+        void FixedUpdate()
+        {
+            // Визуальный поворот в сторону движения (если включён).
+            if (!rotateTowardsVelocity) return;
+            Vector2 v = rb.linearVelocity;
+            if (v.sqrMagnitude < rotationVelocityThreshold * rotationVelocityThreshold) return;
+            float angle = Mathf.Atan2(v.y, v.x) * Mathf.Rad2Deg + spriteForwardOffsetDegrees;
+            rb.MoveRotation(angle);
         }
 
         // ─── Получение урона ─────────────────────────────────────────
 
-        /// <summary>
-        /// Применить урон. Учитывает кулдаун, чтобы один контакт
-        /// не списывал HP несколько раз.
-        /// </summary>
         public void TakeDamage(int amount, GameObject attacker = null)
         {
             if (IsDead || amount <= 0) return;
@@ -70,43 +81,42 @@ namespace CurlingRoyale.Combat
                 Die();
         }
 
-        // ─── Обработка столкновений ─────────────────────────────────
+        // ─── Обработка столкновений (closing-speed based) ──────────
 
         void OnCollisionEnter2D(Collision2D collision)
         {
-            // Игнорируем коллизии с не-камнями (колонны обрабатываются отдельно).
             var other = collision.collider.GetComponent<StoneCombat>();
             if (other == null || damageConfig == null) return;
 
-            // Оба камня получают OnCollisionEnter2D. Чтобы не удваивать урон,
-            // считаем атакующим того, у кого скорость выше (или тот, кто двигался).
-            float mySpeed = rb.linearVelocity.magnitude;
             var otherRb = other.GetComponent<Rigidbody2D>();
-            float otherSpeed = otherRb != null ? otherRb.linearVelocity.magnitude : 0f;
-            if (mySpeed < otherSpeed) return; // уступаем право ударить тому, кто быстрее
 
-            // Скорость атакующего должна быть достаточной.
-            if (mySpeed < damageConfig.minAttackSpeed) return;
-
-            // Рассчитать угол.
-            // Направление удара: от атакующего к жертве.
+            // Направление удара: от меня к жертве.
             Vector2 hitDir = ((Vector2)other.transform.position - (Vector2)transform.position).normalized;
-            // Направление "спины" жертвы: куда жертва двигалась (или hitDir если стоит).
-            Vector2 victimFacing = otherRb.linearVelocity.sqrMagnitude > 0.01f
+
+            // МОЯ скорость сближения = моё движение в направлении жертвы.
+            // Стоящий камень при ударе = myApproach ≈ 0 → не наношу урон (только получаю).
+            // Касательный удар при быстром движении = myApproach маленькая → минимум урона.
+            // Лоб-в-лоб = каждый атакующий наносит (с кулдауном).
+            float myApproach = Vector2.Dot(rb.linearVelocity, hitDir);
+            if (myApproach < damageConfig.minAttackSpeed) return;
+
+            // Направление "спины" жертвы: куда жертва двигалась (или её «лицо» если стоит).
+            Vector2 victimFacing = (otherRb != null && otherRb.linearVelocity.sqrMagnitude > 0.01f)
                 ? otherRb.linearVelocity.normalized
-                : hitDir;
-            // Угол между направлением "спины" жертвы и направлением, откуда прилетел удар.
+                : -hitDir;
+            // Угол между "спиной" жертвы и направлением, откуда прилетел удар.
+            // Угол 0° = прямо в лицо (лоб), 180° = в спину.
             float angle = Vector2.Angle(victimFacing, -hitDir);
 
-            // Damage пропорционален скорости атакующего + углу.
+            // Damage = baseDamage(angle) × speedFactor(approach).
             float speedFactor = Mathf.Clamp(
-                mySpeed / Mathf.Max(0.01f, damageConfig.referenceAttackSpeed),
+                myApproach / Mathf.Max(0.01f, damageConfig.referenceAttackSpeed),
                 0f, damageConfig.maxSpeedMultiplier);
             int damage = Mathf.RoundToInt(
                 damageConfig.CalculateDamage(angle) * speedFactor);
 
-            // Отладка: вывести угол и направления.
-            Debug.Log($"[Combat] {name} → {other.name}: угол={angle:F1}°, скорость={mySpeed:F1} (×{speedFactor:F2}), урон={damage}");
+            // Отладка.
+            Debug.Log($"[Combat] {name} → {other.name}: угол={angle:F1}°, approach={myApproach:F1} (×{speedFactor:F2}), урон={damage}");
 
             other.TakeDamage(damage, gameObject);
         }
@@ -118,14 +128,12 @@ namespace CurlingRoyale.Combat
             Debug.Log($"[Combat] {name} уничтожен.");
             onDeath?.Invoke();
 
-            // Отключаем физику и коллизии, чтобы камень-призрак не мешал.
             rb.linearVelocity = Vector2.zero;
             rb.bodyType = RigidbodyType2D.Static;
             var col = GetComponent<Collider2D>();
             if (col != null) col.enabled = false;
 
-            // Само удаление объекта — снаружи (через ObjectPool или Destroy).
-            // Здесь только событие; GameManager решает, что делать.
+            // GameManager дёрнет наш счётчик alive при следующем Update.
         }
     }
 }
