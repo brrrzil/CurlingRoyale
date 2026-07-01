@@ -15,7 +15,7 @@ MonoBehaviour:
   maxHealth: 100
   backDamage: 40
   sideDamage: 20
-  frontDamage: 0
+  frontDamage: 10
   frontAngleThreshold: 30
   backAngleThreshold: 170
   minAttackSpeed: 3

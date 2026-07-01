@@ -428,7 +428,7 @@ GameObject:
   - component: {fileID: 1726907656354502455}
   - component: {fileID: 1531735190271861640}
   - component: {fileID: 7812948529820293598}
-  - component: {fileID: 1408237307151971140}
+  - component: {fileID: 2261569622813082235}
   m_Layer: 0
   m_Name: StoneTest
   m_TagString: Untagged
@@ -589,7 +589,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fc7f1418f7cd5604f8531af24517b768, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
---- !u!114 &1408237307151971140
+--- !u!114 &2261569622813082235
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -598,11 +598,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 8115788672289187133}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f3bcce48d1165e445a9ba7da4eeed878, type: 3}
+  m_Script: {fileID: 11500000, guid: b9165885b00e68b4aa2ff9c1ec2d37d8, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: '::'
-  minForce: 3
-  maxForce: 30
-  maxChargeTime: 2
-  lineRenderer: {fileID: 3711627353047062969}
-  chargeCircle: {fileID: 7010765756356264014}
+  m_EditorClassIdentifier: Assembly-CSharp::CurlingRoyale.Combat.ReloadController
+  reloadDuration: 1
+  movingThreshold: 0.5
+  startReady: 1
+  onReloadStart:
+    m_PersistentCalls:
+      m_Calls: []
+  onReloadComplete:
+    m_PersistentCalls:
+      m_Calls: []
