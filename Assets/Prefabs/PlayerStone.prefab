@@ -193,6 +193,59 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!1 &2115433774018173829
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 794428611414583926}
+  - component: {fileID: 5456584221276676947}
+  m_Layer: 0
+  m_Name: HealthBar
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &794428611414583926
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2115433774018173829}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1.2, z: 0}
+  m_LocalScale: {x: 1.5, y: 0.2, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4383550488976374149}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5456584221276676947
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2115433774018173829}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74570d97add2cd948afd0e2694b7462d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CurlingRoyale.Combat.HealthBar
+  fullWidth: 5
+  barHeight: 1
+  offset: {x: 0, y: 1.2, z: 0}
+  highColor: {r: 0.3, g: 0.85, b: 0.3, a: 1}
+  midColor: {r: 0.95, g: 0.85, b: 0.3, a: 1}
+  lowColor: {r: 0.95, g: 0.3, b: 0.3, a: 1}
+  backgroundRenderer: {fileID: 0}
+  backgroundColor: {r: 0.15, g: 0.15, b: 0.15, a: 0.85}
+  sortingOrder: 10
 --- !u!1 &2381458603071080877
 GameObject:
   m_ObjectHideFlags: 0
@@ -609,9 +662,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 74570d97add2cd948afd0e2694b7462d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CurlingRoyale.Combat.HealthBar
-  fillColor: {r: 0.2, g: 0.85, b: 0.3, a: 1}
+  fullWidth: 1.5
+  barHeight: 0.2
+  offset: {x: 0, y: 1.2, z: 0}
+  highColor: {r: 0.3, g: 0.85, b: 0.3, a: 1}
+  midColor: {r: 0.95, g: 0.85, b: 0.3, a: 1}
+  lowColor: {r: 0.95, g: 0.3, b: 0.3, a: 1}
+  backgroundRenderer: {fileID: 0}
   backgroundColor: {r: 0.85, g: 0.2, b: 0.2, a: 1}
-  smoothSpeed: 8
+  sortingOrder: 10
 --- !u!1 &6579214179471005734
 GameObject:
   m_ObjectHideFlags: 0
@@ -935,6 +994,7 @@ GameObject:
   - component: {fileID: 7812948529820293598}
   - component: {fileID: 1408237307151971140}
   - component: {fileID: -4067264744675236013}
+  - component: {fileID: 2261569622813082235}
   m_Layer: 0
   m_Name: PlayerStone
   m_TagString: Untagged
@@ -960,6 +1020,7 @@ Transform:
   - {fileID: 1900561842540622763}
   - {fileID: 7010765756356264014}
   - {fileID: 4559112769954687663}
+  - {fileID: 794428611414583926}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &3360361478724708434
@@ -1133,5 +1194,26 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   onDeath:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &2261569622813082235
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8115788672289187133}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9165885b00e68b4aa2ff9c1ec2d37d8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CurlingRoyale.Combat.ReloadController
+  reloadDuration: 1
+  movingThreshold: 0.5
+  startReady: 1
+  onReloadStart:
+    m_PersistentCalls:
+      m_Calls: []
+  onReloadComplete:
     m_PersistentCalls:
       m_Calls: []

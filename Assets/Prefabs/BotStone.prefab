@@ -356,6 +356,59 @@ RectTransform:
   m_AnchoredPosition: {x: -5, y: 0}
   m_SizeDelta: {x: -20, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &4040773493330573575
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9102167951796864677}
+  - component: {fileID: 8776002983944449608}
+  m_Layer: 0
+  m_Name: HealthBar
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9102167951796864677
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4040773493330573575}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 1.2000003, z: 0}
+  m_LocalScale: {x: 1.5, y: 0.19999999, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4383550488976374149}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8776002983944449608
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4040773493330573575}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74570d97add2cd948afd0e2694b7462d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CurlingRoyale.Combat.HealthBar
+  fullWidth: 5
+  barHeight: 1
+  offset: {x: 0, y: 1.2, z: 0}
+  highColor: {r: 0.3, g: 0.85, b: 0.3, a: 1}
+  midColor: {r: 0.95, g: 0.85, b: 0.3, a: 1}
+  lowColor: {r: 0.95, g: 0.3, b: 0.3, a: 1}
+  backgroundRenderer: {fileID: 0}
+  backgroundColor: {r: 0.15, g: 0.15, b: 0.15, a: 0.85}
+  sortingOrder: 10
 --- !u!1 &4481065462480656870
 GameObject:
   m_ObjectHideFlags: 0
@@ -609,9 +662,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 74570d97add2cd948afd0e2694b7462d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CurlingRoyale.Combat.HealthBar
-  fillColor: {r: 0.2, g: 0.85, b: 0.3, a: 1}
+  fullWidth: 1.5
+  barHeight: 0.2
+  offset: {x: 0, y: 1.2, z: 0}
+  highColor: {r: 0.3, g: 0.85, b: 0.3, a: 1}
+  midColor: {r: 0.95, g: 0.85, b: 0.3, a: 1}
+  lowColor: {r: 0.95, g: 0.3, b: 0.3, a: 1}
+  backgroundRenderer: {fileID: 0}
   backgroundColor: {r: 0.85, g: 0.2, b: 0.2, a: 1}
-  smoothSpeed: 8
+  sortingOrder: 10
 --- !u!1 &6579214179471005734
 GameObject:
   m_ObjectHideFlags: 0
@@ -933,8 +992,8 @@ GameObject:
   - component: {fileID: 1726907656354502455}
   - component: {fileID: 1531735190271861640}
   - component: {fileID: 7812948529820293598}
-  - component: {fileID: 1408237307151971140}
   - component: {fileID: -4067264744675236013}
+  - component: {fileID: 2261569622813082235}
   m_Layer: 0
   m_Name: BotStone
   m_TagString: Untagged
@@ -960,6 +1019,7 @@ Transform:
   - {fileID: 1900561842540622763}
   - {fileID: 7010765756356264014}
   - {fileID: 4559112769954687663}
+  - {fileID: 9102167951796864677}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &3360361478724708434
@@ -1096,23 +1156,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fc7f1418f7cd5604f8531af24517b768, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
---- !u!114 &1408237307151971140
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8115788672289187133}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f3bcce48d1165e445a9ba7da4eeed878, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: '::'
-  minForce: 3
-  maxForce: 30
-  maxChargeTime: 2
-  lineRenderer: {fileID: 3711627353047062969}
-  chargeCircle: {fileID: 7010765756356264014}
 --- !u!114 &-4067264744675236013
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1133,5 +1176,26 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   onDeath:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &2261569622813082235
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8115788672289187133}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9165885b00e68b4aa2ff9c1ec2d37d8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CurlingRoyale.Combat.ReloadController
+  reloadDuration: 1
+  movingThreshold: 0.5
+  startReady: 1
+  onReloadStart:
+    m_PersistentCalls:
+      m_Calls: []
+  onReloadComplete:
     m_PersistentCalls:
       m_Calls: []
