@@ -1,4 +1,5 @@
 using UnityEngine;
+using CurlingRoyale.Combat;
 using CurlingRoyale.Game;
 
 namespace CurlingRoyale.Bots
