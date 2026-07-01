@@ -1,62 +1,57 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace CurlingRoyale.Combat
 {
     /// <summary>
-    /// HP-бар камня на чистом SpriteRenderer (без UGUI).
-    /// Вешается на свой собственный GameObject (можно дочерний к Stone).
-    /// В Awake скрипт отвязывается от родителя в World Space — так камень может
-    /// крутиться (rotateTowardsVelocity), а HP-бар всегда горизонтальный.
-    /// Позиция: position камня + offset (мировые координаты).
+    /// HP-бар камня на World Space Canvas с двумя Image (фон + заливка).
+    /// В Awake скрипт отвязывается от родителя и каждый кадр следит за позицией
+    /// камня + offset (rotation = identity — не наследует вращение камня).
+    /// Никакого ручного wiring в Editor: добавил HealthBar на Stone → всё работает.
     /// </summary>
     [DisallowMultipleComponent]
     public class HealthBar : MonoBehaviour
     {
         [Header("Дизайн")]
-        [Tooltip("Ширина полного бара (мировые единицы).")]
-        [Min(0.1f)] public float fullWidth = 1.5f;
+        [Tooltip("Ширина полного бара в пикселях канваса. 200 = 2 world units при canvasScale 0.01.")]
+        [Min(10f)] public float canvasWidthPx = 200f;
 
-        [Tooltip("Высота бара (мировые единицы).")]
-        [Min(0.05f)] public float barHeight = 0.2f;
+        [Tooltip("Высота бара в пикселях канваса.")]
+        [Min(2f)] public float canvasHeightPx = 24f;
 
-        [Tooltip("Смещение над камнем (мировые координаты, не локальные).")]
+        [Tooltip("Масштаб Canvas — переводит пиксели в мировые единицы. " +
+                 "0.01 = 200px \u2192 2 world units (тонкая полоска над камнем).")]
+        [Min(0.001f)] public float canvasWorldScale = 0.01f;
+
+        [Tooltip("Смещение над камнем (мировые координаты).")]
         public Vector3 offset = new Vector3(0f, 1.2f, 0f);
 
         [Header("Цвета")]
         public Color highColor = new Color(0.30f, 0.85f, 0.30f, 1f);
         public Color midColor = new Color(0.95f, 0.85f, 0.30f, 1f);
         public Color lowColor = new Color(0.95f, 0.30f, 0.30f, 1f);
-
-        [Header("Цвет фона")]
-        public SpriteRenderer backgroundRenderer;
-        public Color backgroundColor = new Color(0.15f, 0.15f, 0.15f, 0.85f);
+        public Color backgroundColor = new Color(0.10f, 0.10f, 0.10f, 0.75f);
 
         [Header("Сортировка")]
-        public int sortingOrder = 10;
+        public int sortingOrder = 100;
 
-        // Внутреннее
-        private SpriteRenderer fillRenderer;
+        // ─── Внутреннее ─────────────────────────────────────
         private StoneCombat target;
         private Transform targetTransform;
-        private Vector3 baseScale;
-
-        void Reset()
-        {
-            transform.localPosition = offset;
-            baseScale = new Vector3(fullWidth, barHeight, 1f);
-            transform.localScale = baseScale;
-        }
+        private Transform canvasTransform;
+        private RectTransform fillRT;
+        private Image fillImage;
+        private RectTransform bgRT;
+        private Image bgImage;
+        private float currentFill01 = 1f;
 
         void Awake()
         {
-            // Отвязываемся от камня. rotation камня перестаёт влиять на HP-бар.
+            // Отвязываемся от родителя (чтобы вращение камня не двигало бар).
             if (transform.parent != null)
                 transform.SetParent(null, true);
 
-            if (baseScale == Vector3.zero)
-                baseScale = transform.localScale == Vector3.zero
-                    ? new Vector3(fullWidth, barHeight, 1f)
-                    : transform.localScale;
+            BuildCanvas();
         }
 
         void Start()
@@ -64,9 +59,6 @@ namespace CurlingRoyale.Combat
             if (target == null) target = GetComponentInParent<StoneCombat>();
             if (target == null) return;
             targetTransform = target.transform;
-
-            EnsureFillRenderer();
-            EnsureBackground();
 
             target.onHealthChanged.AddListener(OnHealthChanged);
             OnHealthChanged(target.CurrentHP, target.MaxHP);
@@ -84,48 +76,69 @@ namespace CurlingRoyale.Combat
             transform.rotation = Quaternion.identity;
         }
 
-        private void EnsureFillRenderer()
+        // ─── Создание UI ─────────────────────────────────────
+
+        private void BuildCanvas()
         {
-            if (fillRenderer != null) return;
-            if (!TryGetComponent(out fillRenderer))
-                fillRenderer = gameObject.AddComponent<SpriteRenderer>();
-            fillRenderer.sprite = GetOrCreateBarSprite();
-            fillRenderer.sortingOrder = sortingOrder;
+            // Canvas (World Space).
+            var canvasGO = new GameObject("HP_Canvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            canvasTransform = canvasGO.transform;
+            canvasTransform.SetParent(transform, false);
+
+            var canvas = canvasGO.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.WorldSpace;
+            canvas.sortingOrder = sortingOrder;
+
+            var crt = canvasGO.GetComponent<RectTransform>();
+            crt.sizeDelta = new Vector2(canvasWidthPx, canvasHeightPx);
+            canvasTransform.localScale = Vector3.one * canvasWorldScale;
+
+            var scaler = canvasGO.GetComponent<CanvasScaler>();
+            scaler.dynamicPixelsPerUnit = 100f;
+            scaler.referencePixelsPerUnit = 100f;
+
+            // Background Image.
+            var bgGO = new GameObject("BG", typeof(RectTransform), typeof(Image));
+            bgGO.transform.SetParent(canvasTransform, false);
+            bgImage = bgGO.GetComponent<Image>();
+            bgImage.color = backgroundColor;
+            bgRT = bgGO.GetComponent<RectTransform>();
+            bgRT.anchorMin = Vector2.zero;
+            bgRT.anchorMax = Vector2.one;
+            bgRT.offsetMin = Vector2.zero;
+            bgRT.offsetMax = Vector2.zero;
+
+            // Fill Image.
+            var fillGO = new GameObject("Fill", typeof(RectTransform), typeof(Image));
+            fillGO.transform.SetParent(canvasTransform, false);
+            fillImage = fillGO.GetComponent<Image>();
+            fillImage.color = highColor;
+            fillRT = fillGO.GetComponent<RectTransform>();
+            // Якоря слева — fill «растёт» вправо.
+            fillRT.anchorMin = new Vector2(0f, 0f);
+            fillRT.anchorMax = new Vector2(0f, 1f);
+            fillRT.pivot = new Vector2(0f, 0.5f);
+            fillRT.anchoredPosition = Vector2.zero;
+            fillRT.sizeDelta = new Vector2(canvasWidthPx, 0f);
         }
 
-        private void EnsureBackground()
-        {
-            if (backgroundRenderer != null) return;
-            var bg = new GameObject("Background");
-            bg.transform.SetParent(transform, false);
-            bg.transform.localPosition = Vector3.zero;
-            bg.transform.localScale = Vector3.one;
-            backgroundRenderer = bg.AddComponent<SpriteRenderer>();
-            backgroundRenderer.sprite = GetOrCreateBarSprite();
-            backgroundRenderer.color = backgroundColor;
-            backgroundRenderer.sortingOrder = sortingOrder - 1;
-        }
+        // ─── Логика ─────────────────────────────────────
 
         private void OnHealthChanged(int current, int max)
         {
-            if (max <= 0 || fillRenderer == null) return;
-            float t = Mathf.Clamp01((float)current / max);
-            transform.localScale = new Vector3(baseScale.x * t, baseScale.y, 1f);
-            fillRenderer.color = t > 0.6f ? highColor : (t > 0.3f ? midColor : lowColor);
-        }
+            if (max <= 0) return;
+            currentFill01 = Mathf.Clamp01((float)current / max);
 
-        private static Sprite cachedBarSprite;
-
-        private static Sprite GetOrCreateBarSprite()
-        {
-            if (cachedBarSprite != null) return cachedBarSprite;
-            cachedBarSprite = Sprite.Create(
-                Texture2D.whiteTexture,
-                new Rect(0f, 0f, 4f, 4f),
-                new Vector2(0f, 0.5f),
-                10f);
-            cachedBarSprite.name = "HPBarSprite";
-            return cachedBarSprite;
+            if (fillRT != null)
+            {
+                fillRT.sizeDelta = new Vector2(canvasWidthPx * currentFill01, 0f);
+            }
+            if (fillImage != null)
+            {
+                fillImage.color = currentFill01 > 0.6f ? highColor
+                    : currentFill01 > 0.3f ? midColor
+                    : lowColor;
+            }
         }
     }
 }

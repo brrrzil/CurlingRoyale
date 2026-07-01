@@ -43,17 +43,23 @@ namespace CurlingRoyale.Combat
             rb = GetComponent<Rigidbody2D>();
             rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
             rb.linearDamping = 2.5f;
+
+            // Авто-фоллбек: если в инспекторе не назначен DamageConfig — создаём runtime-дефолт.
+            // Чтобы проект работал out-of-the-box без ручного wiring.
+            if (damageConfig == null)
+            {
+                damageConfig = ScriptableObject.CreateInstance<DamageConfig>();
+                damageConfig.name = "DamageConfig_RuntimeDefault";
+                Debug.LogWarning($"[Combat] {name}: DamageConfig НЕ назначен — создан runtime-дефолт. " +
+                                 "Назначь Assets/Configs/DamageConfig.asset в инспекторе для production values.", this);
+            }
+
             CurrentHP = MaxHP;
         }
 
         void Start()
         {
             onHealthChanged?.Invoke(CurrentHP, MaxHP);
-            if (damageConfig == null)
-            {
-                Debug.LogWarning($"[Combat] {name}: damageConfig НЕ назначен — урон считаться не будет. " +
-                                 "Перетащи DamageConfig.asset в инспектор.", this);
-            }
         }
 
         void FixedUpdate()
