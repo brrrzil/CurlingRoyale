@@ -35,6 +35,14 @@ namespace CurlingRoyale.Combat
         [Tooltip("Минимальная скорость атакующего, чтобы урон вообще считался. Ниже — просто отскок.")]
         [Min(0f)] public float minAttackSpeed = 3f;
 
+        [Tooltip("Скорость-референс: при ней damage-формула даёт базовый урон (speedFactor = 1.0). " +
+                 "Быстрая атака выше referenceAttackSpeed увеличивает урон пропорционально.")]
+        [Min(0.1f)] public float referenceAttackSpeed = 10f;
+
+        [Tooltip("Множитель максимального усиления урона от скорости. speedFactor clamp [0..maxSpeedMultiplier]. " +
+                 "1.5 = лёгкое усиление, 2.0 = сильно быстрее = больнее.")]
+        [Min(1f)] public float maxSpeedMultiplier = 1.5f;
+
         [Tooltip("Кулдаун между получениями урона в секундах. Защита от двойного урона при одном контакте.")]
         [Min(0f)] public float damageCooldown = 0.4f;
 

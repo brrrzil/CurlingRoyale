@@ -59,6 +59,7 @@ namespace CurlingRoyale.Bots
 
         void OnEnable()
         {
+            // Если GameManager уже есть, подпишемся.
             if (GameManager.Instance != null)
                 GameManager.Instance.onStateChanged += OnGameStateChanged;
             EnsureChargeRing();
@@ -83,10 +84,28 @@ namespace CurlingRoyale.Bots
             CurrentState = State.Targeting;
         }
 
+        // Self-healing: если GameManager.Instance был null при OnEnable, подпишемся позже.
+        private void TrySubscribeIfNeeded()
+        {
+            if (GameManager.Instance == null) return;
+            GameManager.Instance.onStateChanged -= OnGameStateChanged; // защита от двойной подписки
+            GameManager.Instance.onStateChanged += OnGameStateChanged;
+            // Также подтянем текущее состояние.
+            if (GameManager.Instance.State == GameManager.MatchState.InProgress && CurrentState == State.Idle)
+                CurrentState = State.Targeting;
+        }
+
         // ─── FSM ───────────────────────────────────────────────────
 
         void Update()
         {
+            // Если мы ещё не подписаны (GameManager.Instance появился позже) — подпишемся.
+            if (GameManager.Instance != null && CurrentState == State.Idle &&
+                GameManager.Instance.State == GameManager.MatchState.InProgress)
+            {
+                TrySubscribeIfNeeded();
+            }
+
             if (CurrentState == State.Idle) return;
             if (GameManager.Instance == null || GameManager.Instance.State != GameManager.MatchState.InProgress)
                 return;

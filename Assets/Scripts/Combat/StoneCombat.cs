@@ -35,6 +35,8 @@ namespace CurlingRoyale.Combat
             rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
             // Усиленное торможение, чтобы камни останавливались за ~2-3 секунды.
             rb.linearDamping = 2.5f;
+            // Замораживаем вращение — иначе HP-бар (child) крутится вместе с камнем.
+            rb.constraints = RigidbodyConstraints2D.FreezeRotation;
             CurrentHP = MaxHP;
         }
 
@@ -96,10 +98,15 @@ namespace CurlingRoyale.Combat
             // Угол между направлением "спины" жертвы и направлением, откуда прилетел удар.
             float angle = Vector2.Angle(victimFacing, -hitDir);
 
-            int damage = damageConfig.CalculateDamage(angle);
+            // Damage пропорционален скорости атакующего + углу.
+            float speedFactor = Mathf.Clamp(
+                mySpeed / Mathf.Max(0.01f, damageConfig.referenceAttackSpeed),
+                0f, damageConfig.maxSpeedMultiplier);
+            int damage = Mathf.RoundToInt(
+                damageConfig.CalculateDamage(angle) * speedFactor);
 
             // Отладка: вывести угол и направления.
-            Debug.Log($"[Combat] {name} → {other.name}: угол={angle:F1}°, урон={damage}");
+            Debug.Log($"[Combat] {name} → {other.name}: угол={angle:F1}°, скорость={mySpeed:F1} (×{speedFactor:F2}), урон={damage}");
 
             other.TakeDamage(damage, gameObject);
         }
