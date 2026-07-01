@@ -63,6 +63,13 @@ namespace CurlingRoyale.Game
             Instance = this;
         }
 
+        void Start()
+        {
+            // Авто-старт матча при загрузке сцены (для прототипа).
+            // Позже заменить на UI-кнопку «Play».
+            StartMatch();
+        }
+
         void OnDestroy()
         {
             if (Instance == this) Instance = null;

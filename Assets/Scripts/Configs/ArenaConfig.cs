@@ -19,8 +19,9 @@ namespace CurlingRoyale.Configs
 
         [Header("Shrinking (финальная фаза)")]
         [Tooltip("Когда начинать shrinking: по числу оставшихся в живых камней. " +
-                 "Например, 3 = когда осталось 3 камня, начать сжатие.")]
-        [Min(2)] public int shrinkStartAliveCount = 3;
+                 "Например, 3 = когда осталось 3 камня, начать сжатие. " +
+                 "999 = отключить shrinking.")]
+        [Min(2)] public int shrinkStartAliveCount = 999;
 
         [Tooltip("Сколько секунд длится сжатие от initialRadius до finalRadius.")]
         [Min(0.5f)] public float shrinkDuration = 25f;

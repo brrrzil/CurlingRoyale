@@ -30,6 +30,11 @@ namespace CurlingRoyale.Combat
         void Awake()
         {
             rb = GetComponent<Rigidbody2D>();
+            // Continuous collision detection — без этого быстрые камни тоннелируют
+            // сквозь друг друга и сквозь границу арены.
+            rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+            // Усиленное торможение, чтобы камни останавливались за ~2-3 секунды.
+            rb.linearDamping = 2.5f;
             CurrentHP = MaxHP;
         }
 
