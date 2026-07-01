@@ -49,6 +49,11 @@ namespace CurlingRoyale.Combat
         void Start()
         {
             onHealthChanged?.Invoke(CurrentHP, MaxHP);
+            if (damageConfig == null)
+            {
+                Debug.LogWarning($"[Combat] {name}: damageConfig НЕ назначен — урон считаться не будет. " +
+                                 "Перетащи DamageConfig.asset в инспектор.", this);
+            }
         }
 
         void FixedUpdate()
@@ -85,8 +90,10 @@ namespace CurlingRoyale.Combat
 
         void OnCollisionEnter2D(Collision2D collision)
         {
+            if (damageConfig == null) return; // предупреждение уже было в Start
+
             var other = collision.collider.GetComponent<StoneCombat>();
-            if (other == null || damageConfig == null) return;
+            if (other == null) return; // это не камень — игнорируем
 
             var otherRb = other.GetComponent<Rigidbody2D>();
 
@@ -98,7 +105,11 @@ namespace CurlingRoyale.Combat
             // Касательный удар при быстром движении = myApproach маленькая → минимум урона.
             // Лоб-в-лоб = каждый атакующий наносит (с кулдауном).
             float myApproach = Vector2.Dot(rb.linearVelocity, hitDir);
-            if (myApproach < damageConfig.minAttackSpeed) return;
+            if (myApproach < damageConfig.minAttackSpeed)
+            {
+                Debug.Log($"[Combat] {name} \u2192 {other.name}: approach={myApproach:F2} ниже minAttackSpeed={damageConfig.minAttackSpeed} — пропускаем");
+                return;
+            }
 
             // Направление "спины" жертвы: куда жертва двигалась (или её «лицо» если стоит).
             Vector2 victimFacing = (otherRb != null && otherRb.linearVelocity.sqrMagnitude > 0.01f)

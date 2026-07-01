@@ -22,7 +22,20 @@ namespace CurlingRoyale.Game
             MatchEnd,
         }
 
-        public static GameManager Instance { get; private set; }
+        public static GameManager Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    // Lazy-find в сцене — для случая когда бот стартует раньше GameManager.
+                    _instance = FindFirstObjectByType<GameManager>(FindObjectsInactive.Include);
+                }
+                return _instance;
+            }
+            private set => _instance = value;
+        }
+        private static GameManager _instance;
 
         [Header("Настройки матча")]
         [Tooltip("Длительность фазы MatchStart (перед InProgress). Сейчас можно задать как 'tick before go'.")]
