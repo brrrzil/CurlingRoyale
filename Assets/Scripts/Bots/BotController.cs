@@ -5,53 +5,40 @@ using CurlingRoyale.Game;
 namespace CurlingRoyale.Bots
 {
     /// <summary>
-    /// Простой FSM-бот для камня. Подписывается на GameManager.MatchState.
+    /// Простой FSM-бот. Активен когда GameManager.State == InProgress.
     /// Цикл: Targeting → Aiming → Charging → Released → Cooldown → Targeting.
-    /// Бот выбирает живую цель и стреляет в её сторону.
-    ///
-    /// Параметры баланса берутся из Round 0 TZ (maxCharge = 1.5, угол разброс ±15°).
+    /// Каждый переход Targeting ждёт ReloadController.IsReady (перезарядка).
+    /// chargeRing sprite создаётся программно — в Inspector ничего ставить не надо.
     /// </summary>
     [RequireComponent(typeof(CustomPhysicsBody))]
+    [RequireComponent(typeof(ReloadController))]
     public class BotController : MonoBehaviour
     {
         public enum State
         {
-            Idle,        // матч не активен — ждём
-            Targeting,   // выбираем цель
-            Aiming,      // пауза перед зарядкой (имитация «думаю»)
-            Charging,    // накапливаем силу
-            Released,    // выстрел произведён, ждём остановки
-            Cooldown,    // короткая пауза между выстрелами
+            Idle, Targeting, Aiming, Charging, Released, Cooldown
         }
 
         [Header("Параметры бота")]
-        [Tooltip("Минимальная сила выстрела.")]
         [Min(0f)] public float minForce = 4f;
-
-        [Tooltip("Максимальная сила выстрела (слабее игрока).")]
         [Min(1f)] public float maxForce = 14f;
-
-        [Tooltip("Минимальное время зарядки (сек).")]
         [Min(0f)] public float minChargeTime = 0.6f;
-
-        [Tooltip("Максимальное время зарядки (сек).")]
         [Min(0.1f)] public float maxChargeTime = 1.4f;
-
-        [Tooltip("Разброс прицела в градусах (анти-имба: бот промахивается).")]
         [Range(0f, 60f)] public float aimSpreadDegrees = 18f;
-
-        [Tooltip("Шанс выбрать случайную цель вместо ближайшей (0..1).")]
         [Range(0f, 1f)] public float randomTargetChance = 0.15f;
-
-        [Tooltip("Время кд между выстрелами (сек).")]
         [Min(0.1f)] public float cooldownDuration = 1.2f;
 
-        [Header("Визуал (опционально)")]
-        public SpriteRenderer chargeRingRenderer; // кружок силы, как у игрока
+        [Header("Цвета charge ring (авто-создаваемого)")]
+        public Color ringMinColor = new Color(0.3f, 0.85f, 0.4f, 0.85f);
+        public Color ringMaxColor = new Color(0.95f, 0.3f, 0.3f, 0.85f);
+        public float ringStartRadius = 0.5f;
+        public float ringEndRadius = 1.5f;
+        public int ringSortingOrder = 10;
 
-        // ─── Состояние ──────────────────────────────────────────────
+        // ─── Состояние ─────────────────────────────────────────────
         public State CurrentState { get; private set; } = State.Idle;
         private CustomPhysicsBody physicsBody;
+        private ReloadController reload;
         private Transform currentTarget;
         private Vector2 currentDirection;
         private float chargeStartTime;
@@ -59,46 +46,57 @@ namespace CurlingRoyale.Bots
         private float aimTimer;
         private float cooldownTimer;
 
+        // авто-создаваемый ring
+        private SpriteRenderer chargeRingRenderer;
+        private Color baseRingColor;
+
         void Awake()
         {
             physicsBody = GetComponent<CustomPhysicsBody>();
-            if (chargeRingRenderer != null) chargeRingRenderer.gameObject.SetActive(false);
+            reload = GetComponent<ReloadController>();
+            EnsureChargeRing();
         }
 
         void OnEnable()
         {
             if (GameManager.Instance != null)
                 GameManager.Instance.onStateChanged += OnGameStateChanged;
+            EnsureChargeRing();
+            SetRingActive(false);
         }
 
         void OnDisable()
         {
             if (GameManager.Instance != null)
                 GameManager.Instance.onStateChanged -= OnGameStateChanged;
+            SetRingActive(false);
         }
 
         private void OnGameStateChanged(GameManager.MatchState newState)
         {
-            // Любое изменение состояния вне InProgress — на Idle.
             if (newState != GameManager.MatchState.InProgress)
             {
                 CurrentState = State.Idle;
-                HideChargeVisual();
+                SetRingActive(false);
                 return;
             }
-            // Вход в InProgress: начинаем с Targeting.
             CurrentState = State.Targeting;
         }
 
+        // ─── FSM ───────────────────────────────────────────────────
+
         void Update()
         {
+            if (CurrentState == State.Idle) return;
+            if (GameManager.Instance == null || GameManager.Instance.State != GameManager.MatchState.InProgress)
+                return;
+
             float dt = Time.deltaTime;
             switch (CurrentState)
             {
-                case State.Idle:
-                    return;
-
                 case State.Targeting:
+                    // Ждём reload перед поиском цели.
+                    if (!reload.IsReady) return;
                     PickTarget();
                     BeginAiming();
                     break;
@@ -109,16 +107,14 @@ namespace CurlingRoyale.Bots
                     break;
 
                 case State.Charging:
-                    UpdateChargeVisual();
-                    float elapsed = Time.time - chargeStartTime;
-                    if (elapsed >= chargeDuration) ReleaseShot();
+                    UpdateRingVisual();
+                    if (Time.time - chargeStartTime >= chargeDuration) ReleaseShot();
                     break;
 
                 case State.Released:
-                    // Ждём, пока камень замедлится (или жёсткий таймаут).
                     if (physicsBody.GetVelocity().sqrMagnitude < 0.04f)
                         CurrentState = State.Cooldown;
-                    else if (Time.time - chargeStartTime > 5f) // safety: даже если застрял
+                    else if (Time.time - chargeStartTime > 5f)
                         CurrentState = State.Cooldown;
                     break;
 
@@ -129,29 +125,23 @@ namespace CurlingRoyale.Bots
             }
         }
 
-        // ─── Переходы FSM ───────────────────────────────────────────
-
         private void PickTarget()
         {
-            // Простая эвристика: ищем все StoneCombat на сцене, фильтруем живых и не нас.
             StoneCombat[] all = FindObjectsByType<StoneCombat>(FindObjectsSortMode.None);
             StoneCombat best = null;
             float bestDist = float.MaxValue;
             bool pickRandom = Random.value < randomTargetChance;
+            int candidates = 0;
 
             for (int i = 0; i < all.Length; i++)
             {
                 var s = all[i];
                 if (s == null || s.IsDead) continue;
                 if (s.gameObject == gameObject) continue;
-
+                candidates++;
                 if (pickRandom)
                 {
-                    if (Random.value < 1f / (all.Length - i))
-                    {
-                        best = s;
-                        break;
-                    }
+                    if (Random.value < 1f / Mathf.Max(1, candidates)) { best = s; }
                 }
                 else
                 {
@@ -172,20 +162,13 @@ namespace CurlingRoyale.Bots
                 return;
             }
 
-            // Целься в сторону, ПРОТИВОПОЛОЖНУЮ направлению движения цели (в спину).
             Vector2 toTarget = (Vector2)currentTarget.position - (Vector2)transform.position;
             Vector2 targetFacing = currentTarget.TryGetComponent<Rigidbody2D>(out var rb) && rb.linearVelocity.sqrMagnitude > 0.05f
                 ? rb.linearVelocity.normalized
                 : -toTarget.normalized;
 
-            // Направление удара = в спину цели: вдоль targetFacing (нам надо лететь за ней).
-            Vector2 desired = targetFacing;
-            // Разброс прицела.
             float spread = Random.Range(-aimSpreadDegrees, aimSpreadDegrees);
-            desired = (Quaternion.Euler(0, 0, spread) * (Vector3)desired).normalized;
-
-            // Дальность подбираем так, чтобы прицел был близко к точному.
-            currentDirection = desired;
+            currentDirection = (Quaternion.Euler(0, 0, spread) * (Vector3)targetFacing).normalized;
             aimTimer = Random.Range(0.15f, 0.5f);
             CurrentState = State.Aiming;
         }
@@ -195,7 +178,8 @@ namespace CurlingRoyale.Bots
             chargeDuration = Random.Range(minChargeTime, maxChargeTime);
             chargeStartTime = Time.time;
             CurrentState = State.Charging;
-            ShowChargeVisual();
+            SetRingActive(true);
+            UpdateRingVisual();
         }
 
         private void ReleaseShot()
@@ -203,47 +187,52 @@ namespace CurlingRoyale.Bots
             float t = Mathf.Clamp01((Time.time - chargeStartTime) / chargeDuration);
             float force = Mathf.Lerp(minForce, maxForce, t);
             physicsBody.ApplyForce(currentDirection, force);
-
-            HideChargeVisual();
+            SetRingActive(false);
             CurrentState = State.Released;
         }
 
-        // ─── Визуал зарядки ─────────────────────────────────────────
+        // ─── Ring (программное создание) ──────────────────────────
 
-        private void ShowChargeVisual()
+        private void EnsureChargeRing()
         {
-            if (chargeRingRenderer != null)
-            {
-                chargeRingRenderer.gameObject.SetActive(true);
-                chargeRingRenderer.color = Color.green;
-                chargeRingRenderer.transform.localScale = Vector3.one * 0.5f;
-            }
+            if (chargeRingRenderer != null) return;
+            var go = new GameObject("BotChargeRing");
+            go.transform.SetParent(transform, false);
+            go.transform.localPosition = Vector3.zero;
+            // Sprite 1x1 при PPU=100 → 0.01 world units. Умножаем желаемый радиус на 100.
+            go.transform.localScale = Vector3.one * (ringStartRadius * 100f);
+            chargeRingRenderer = go.AddComponent<SpriteRenderer>();
+            chargeRingRenderer.sprite = GetOrCreateRingSprite();
+            chargeRingRenderer.sortingOrder = ringSortingOrder;
+            chargeRingRenderer.color = ringMinColor;
         }
 
-        private void UpdateChargeVisual()
+        private static Sprite cachedRingSprite;
+
+        private static Sprite GetOrCreateRingSprite()
+        {
+            if (cachedRingSprite != null) return cachedRingSprite;
+            var tex = Texture2D.whiteTexture;
+            cachedRingSprite = Sprite.Create(tex, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 100f);
+            cachedRingSprite.name = "BotRingSprite";
+            return cachedRingSprite;
+        }
+
+        private void SetRingActive(bool active)
+        {
+            if (chargeRingRenderer != null && chargeRingRenderer.gameObject.activeSelf != active)
+                chargeRingRenderer.gameObject.SetActive(active);
+        }
+
+        private void UpdateRingVisual()
         {
             if (chargeRingRenderer == null) return;
-            float t = Mathf.Clamp01((Time.time - chargeStartTime) / chargeDuration);
-            chargeRingRenderer.transform.localScale = Vector3.one * Mathf.Lerp(0.5f, 1.5f, t);
-            chargeRingRenderer.color = Color.Lerp(Color.green, Color.red, t);
-        }
-
-        private void HideChargeVisual()
-        {
-            if (chargeRingRenderer != null) chargeRingRenderer.gameObject.SetActive(false);
-        }
-
-        // ─── Репортинг в GameManager ──────────────────────────────────
-
-        /// <summary>
-        /// Сообщить GameManager-у о нашей смерти. Вызывать вручную или
-        /// через событие StoneCombat.OnDeath.
-        /// </summary>
-        public void NotifySelfDied()
-        {
-            // GameManager каждые 0.25 сек сам считает живых StoneCombat-ов
-            // через FindObjectsByType и сам завершит матч при alive <= 1.
-            // Здесь можно ничего не делать; метод оставлен для совместимости.
+            float t = Mathf.Clamp01((Time.time - chargeStartTime) / Mathf.Max(0.01f, chargeDuration));
+            float radius = Mathf.Lerp(ringStartRadius, ringEndRadius, t);
+            // 1×1 sprite при PPU=100, мир 0.01; умножаем радиус на 100.
+            float scale = radius * 100f;
+            chargeRingRenderer.transform.localScale = new Vector3(scale, scale, 1f);
+            chargeRingRenderer.color = Color.Lerp(ringMinColor, ringMaxColor, t);
         }
     }
 }
