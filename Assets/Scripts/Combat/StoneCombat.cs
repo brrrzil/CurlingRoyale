@@ -11,15 +11,14 @@ namespace CurlingRoyale.Combat
     public class StoneCombat : MonoBehaviour
     {
         [Header("Конфигурация")]
-        [Tooltip("ScriptableObject с диапазонами урона. Создать через Create → Curling Royale → Damage Config.")]
+        [Tooltip("ScriptableObject с диапазонами урона. Создать через Create -> Curling Royale -> Damage Config.")]
         [SerializeField] private DamageConfig damageConfig;
 
         [Header("Визуал (поворот в сторону движения)")]
-        [Tooltip("Если true — камень визуально поворачивается (Z-rotation) в сторону velocity.")]
+        [Tooltip("Если true -- камень визуально поворачивается (Z-rotation) в сторону velocity.")]
         public bool rotateTowardsVelocity = true;
 
-        [Tooltip("Смещение между направлением спрайта 'вперёд' и velocity=+X. " +
-                 "Если спрайт нарисован лицом вверх — поставь -90 (тогда velocity=+X даёт rotation 0).")]
+        [Tooltip("Смещение между направлением спрайта 'вперёд' и velocity=+X.")]
         public float spriteForwardOffsetDegrees = -90f;
 
         [Tooltip("Порог скорости ниже которого rotation не обновляется (стоящий камень не дрожит).")]
@@ -30,18 +29,20 @@ namespace CurlingRoyale.Combat
         public UnityEvent onDamageTaken = new UnityEvent();
         public UnityEvent onDeath = new UnityEvent();
 
-        // ─── Публичное состояние ─────────────────────────────────────
+        // Публичное состояние
         public int CurrentHP { get; private set; }
         public int MaxHP => damageConfig != null ? damageConfig.maxHealth : 100;
         public bool IsDead => CurrentHP <= 0;
 
-        private Rigidbody2D rb;
-        private float lastDamageTime = -999f;
-
-        /// <summary>Velocity ДО столкновения — кэшируется в FixedUpdate, чтобы OnCollisionEnter2D
-        /// мог использовать настоящую скорость до impulse.</summary>
+        // Velocity ДО столкновения. FixedUpdate кэширует её ДО physics step.
+        // OnCollisionEnter2D срабатывает ВНУТРИ physics step, и в этот момент
+        // rb.linearVelocity уже включает collision impulse (отражение) ->
+        // Значение "после" обычно обнулено или развёрнуто. Кэш хранит "до".
         public Vector2 PreCollisionVelocity => cachedLinearVelocity;
         private Vector2 cachedLinearVelocity;
+
+        private Rigidbody2D rb;
+        private float lastDamageTime = -999f;
 
         void Awake()
         {
@@ -49,13 +50,11 @@ namespace CurlingRoyale.Combat
             rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
             rb.linearDamping = 2.5f;
 
-            // Авто-фоллбек: если в инспекторе не назначен DamageConfig — создаём runtime-дефолт.
-            // Чтобы проект работал out-of-the-box без ручного wiring.
             if (damageConfig == null)
             {
                 damageConfig = ScriptableObject.CreateInstance<DamageConfig>();
                 damageConfig.name = "DamageConfig_RuntimeDefault";
-                Debug.LogWarning($"[Combat] {name}: DamageConfig НЕ назначен — создан runtime-дефолт. " +
+                Debug.LogWarning($"[Combat] {name}: DamageConfig НЕ назначен -- создан runtime-дефолт. " +
                                  "Назначь Assets/Configs/DamageConfig.asset в инспекторе для production values.", this);
             }
 
@@ -69,16 +68,17 @@ namespace CurlingRoyale.Combat
 
         void FixedUpdate()
         {
-            // Визуальный поворот в сторону движения (если включён).
+            // Кэшируем velocity ДО физического шага.
+            cachedLinearVelocity = rb.linearVelocity;
+
+            // Визуальный поворот (если включён).
             if (!rotateTowardsVelocity) return;
-            Vector2 v = rb.linearVelocity;
-            if (v.sqrMagnitude < rotationVelocityThreshold * rotationVelocityThreshold) return;
-            float angle = Mathf.Atan2(v.y, v.x) * Mathf.Rad2Deg + spriteForwardOffsetDegrees;
+            if (cachedLinearVelocity.sqrMagnitude < rotationVelocityThreshold * rotationVelocityThreshold) return;
+            float angle = Mathf.Atan2(cachedLinearVelocity.y, cachedLinearVelocity.x) * Mathf.Rad2Deg + spriteForwardOffsetDegrees;
             rb.MoveRotation(angle);
         }
 
-        // ─── Получение урона ─────────────────────────────────────────
-
+        // Получение урона
         public void TakeDamage(int amount, GameObject attacker = null)
         {
             if (IsDead || amount <= 0) return;
@@ -97,55 +97,57 @@ namespace CurlingRoyale.Combat
                 Die();
         }
 
-        // ─── Обработка столкновений (closing-speed based) ──────────
-
+        // Обработка столкновений (closing-speed based)
         void OnCollisionEnter2D(Collision2D collision)
         {
-            if (damageConfig == null) return; // предупреждение уже было в Start
+            if (damageConfig == null) return;
 
             var other = collision.collider.GetComponent<StoneCombat>();
-            if (other == null) return; // это не камень — игнорируем
+            if (other == null) return;
 
-            // Направление удара: от меня к жертве.
+            // Диагностика: что в кэше, что в живом rigidbody на момент события.
+            Vector2 liveVel = rb.linearVelocity;
+            Vector2 otherLiveVel = other != null ? other.GetComponent<Rigidbody2D>().linearVelocity : Vector2.zero;
+            Vector2 otherCached = other != null ? other.PreCollisionVelocity : Vector2.zero;
+            Debug.Log($"[Combat/DIAG] {name} hit {other.name}: cached={cachedLinearVelocity}, live={liveVel}, " +
+                      $"otherCached={otherCached}, otherLive={otherLiveVel}");
+
             Vector2 hitDir = ((Vector2)other.transform.position - (Vector2)transform.position).normalized;
 
-            // Моя скорость сближения: используем PRE-collision velocity (из FixedUpdate кэша),
-            // потому что в момент OnCollisionEnter2D rb.linearVelocity уже отражён impulse.
-            // Относительная скорость (relVel): я агрессор только если ДОГОНЯЮ жертву.
-            // Стоящий камень при таране = relVel ≈ 0 → не наношу урон, только получаю свой.
+            // closing speed: берём КЭШИРОВАННУЮ velocity (ДО impulse) и сравниваем с other-cached.
+            // Это даёт нам скорость сближения ДО столкновения --
+            // иначе мы используем отражённый impulse-ом вектор и получаем ~0.
             Vector2 myVel = cachedLinearVelocity;
             Vector2 otherVel = other != null ? other.PreCollisionVelocity : Vector2.zero;
             Vector2 relVel = myVel - otherVel;
+
+            // Если я НАГОНЯЮ жертву -> relVel в направлении hitDir положительная.
+            // Если стою, а жертва летит в меня -> relVel может быть близко к 0 (я не агрессор).
             float myApproach = Vector2.Dot(relVel, hitDir);
             if (myApproach < damageConfig.minAttackSpeed)
             {
-                Debug.Log($"[Combat] {name} \u2192 {other.name}: approach={myApproach:F2} ниже minAttackSpeed={damageConfig.minAttackSpeed} — пропускаем");
+                Debug.Log($"[Combat] {name} -> {other.name}: closing={myApproach:F2} ниже minAttackSpeed={damageConfig.minAttackSpeed} -- пропускаем");
                 return;
             }
 
-            // Направление "спины" жертвы: куда жертва двигалась (или её «лицо» если стоит).
+            // Направление "спины" жертвы (для back/side/front).
             Vector2 victimFacing = otherVel.sqrMagnitude > 0.01f
                 ? otherVel.normalized
                 : -hitDir;
-            // Угол между "спиной" жертвы и направлением, откуда прилетел удар.
-            // Угол 0° = прямо в лицо (лоб), 180° = в спину.
             float angle = Vector2.Angle(victimFacing, -hitDir);
 
-            // Damage = baseDamage(angle) × speedFactor(approach).
             float speedFactor = Mathf.Clamp(
                 myApproach / Mathf.Max(0.01f, damageConfig.referenceAttackSpeed),
                 0f, damageConfig.maxSpeedMultiplier);
             int damage = Mathf.RoundToInt(
                 damageConfig.CalculateDamage(angle) * speedFactor);
 
-            // Отладка.
-            Debug.Log($"[Combat] {name} → {other.name}: угол={angle:F1}°, approach={myApproach:F1} (×{speedFactor:F2}), урон={damage}");
+            Debug.Log($"[Combat] {name} -> {other.name}: угол={angle:F1} deg, closing={myApproach:F1} (x{speedFactor:F2}), урон={damage}");
 
             other.TakeDamage(damage, gameObject);
         }
 
-        // ─── Смерть ─────────────────────────────────────────────────
-
+        // Смерть
         private void Die()
         {
             Debug.Log($"[Combat] {name} уничтожен.");
@@ -155,8 +157,6 @@ namespace CurlingRoyale.Combat
             rb.bodyType = RigidbodyType2D.Static;
             var col = GetComponent<Collider2D>();
             if (col != null) col.enabled = false;
-
-            // GameManager дёрнет наш счётчик alive при следующем Update.
         }
     }
 }
