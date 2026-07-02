@@ -400,13 +400,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 74570d97add2cd948afd0e2694b7462d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CurlingRoyale.Combat.HealthBar
-  fullWidth: 5
-  barHeight: 1
+  canvasWidthPx: 200
+  canvasHeightPx: 24
+  canvasWorldScale: 0.01
   offset: {x: 0, y: 1.2, z: 0}
   highColor: {r: 0.3, g: 0.85, b: 0.3, a: 1}
   midColor: {r: 0.95, g: 0.85, b: 0.3, a: 1}
   lowColor: {r: 0.95, g: 0.3, b: 0.3, a: 1}
-  backgroundRenderer: {fileID: 0}
   backgroundColor: {r: 0.15, g: 0.15, b: 0.15, a: 0.85}
   sortingOrder: 10
 --- !u!1 &4481065462480656870
@@ -662,13 +662,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 74570d97add2cd948afd0e2694b7462d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CurlingRoyale.Combat.HealthBar
-  fullWidth: 1.5
-  barHeight: 0.2
+  canvasWidthPx: 200
+  canvasHeightPx: 24
+  canvasWorldScale: 0.01
   offset: {x: 0, y: 1.2, z: 0}
   highColor: {r: 0.3, g: 0.85, b: 0.3, a: 1}
   midColor: {r: 0.95, g: 0.85, b: 0.3, a: 1}
   lowColor: {r: 0.95, g: 0.3, b: 0.3, a: 1}
-  backgroundRenderer: {fileID: 0}
   backgroundColor: {r: 0.85, g: 0.2, b: 0.2, a: 1}
   sortingOrder: 10
 --- !u!1 &6579214179471005734
@@ -994,6 +994,7 @@ GameObject:
   - component: {fileID: 7812948529820293598}
   - component: {fileID: -4067264744675236013}
   - component: {fileID: 2261569622813082235}
+  - component: {fileID: -5180598632620832824}
   m_Layer: 0
   m_Name: BotStone
   m_TagString: Untagged
@@ -1169,6 +1170,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CurlingRoyale.Combat.StoneCombat
   damageConfig: {fileID: 11400000, guid: 34a8c2581c0052e4d817ca3ea82d0683, type: 2}
+  rotateTowardsVelocity: 1
+  spriteForwardOffsetDegrees: -90
+  rotationVelocityThreshold: 0.2
   onHealthChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -1199,3 +1203,27 @@ MonoBehaviour:
   onReloadComplete:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &-5180598632620832824
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8115788672289187133}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 636a28076c675824882d65be5bf4dc29, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CurlingRoyale.Bots.BotController
+  minForce: 4
+  maxForce: 14
+  minChargeTime: 0.6
+  maxChargeTime: 1.4
+  aimSpreadDegrees: 18
+  randomTargetChance: 0.15
+  cooldownDuration: 1.2
+  ringMinColor: {r: 0.3, g: 0.85, b: 0.4, a: 0.85}
+  ringMaxColor: {r: 0.95, g: 0.3, b: 0.3, a: 0.85}
+  ringStartRadius: 0.5
+  ringEndRadius: 1.5
+  ringSortingOrder: 10

@@ -19,4 +19,6 @@ MonoBehaviour:
   frontAngleThreshold: 30
   backAngleThreshold: 170
   minAttackSpeed: 3
-  damageCooldown: 0.4
+  referenceAttackSpeed: 10
+  maxSpeedMultiplier: 3
+  damageCooldown: 0.5
