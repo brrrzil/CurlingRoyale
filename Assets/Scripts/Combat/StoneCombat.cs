@@ -105,46 +105,50 @@ namespace CurlingRoyale.Combat
             var other = collision.collider.GetComponent<StoneCombat>();
             if (other == null) return;
 
-            // Диагностика: что в кэше, что в живом rigidbody на момент события.
-            Vector2 liveVel = rb.linearVelocity;
-            Vector2 otherLiveVel = other != null ? other.GetComponent<Rigidbody2D>().linearVelocity : Vector2.zero;
-            Vector2 otherCached = other != null ? other.PreCollisionVelocity : Vector2.zero;
-            Debug.Log($"[Combat/DIAG] {name} hit {other.name}: cached={cachedLinearVelocity}, live={liveVel}, " +
-                      $"otherCached={otherCached}, otherLive={otherLiveVel}");
-
-            Vector2 hitDir = ((Vector2)other.transform.position - (Vector2)transform.position).normalized;
-
-            // closing speed: берём КЭШИРОВАННУЮ velocity (ДО impulse) и сравниваем с other-cached.
-            // Это даёт нам скорость сближения ДО столкновения --
-            // иначе мы используем отражённый impulse-ом вектор и получаем ~0.
+            // Скорость ДО столкновения -- из кэша (rb уже отражён impulse-ом).
             Vector2 myVel = cachedLinearVelocity;
-            Vector2 otherVel = other != null ? other.PreCollisionVelocity : Vector2.zero;
-            Vector2 relVel = myVel - otherVel;
-
-            // Если я НАГОНЯЮ жертву -> relVel в направлении hitDir положительная.
-            // Если стою, а жертва летит в меня -> relVel может быть близко к 0 (я не агрессор).
-            float myApproach = Vector2.Dot(relVel, hitDir);
-            if (myApproach < damageConfig.minAttackSpeed)
-            {
-                Debug.Log($"[Combat] {name} -> {other.name}: closing={myApproach:F2} ниже minAttackSpeed={damageConfig.minAttackSpeed} -- пропускаем");
+            if (myVel.sqrMagnitude < damageConfig.minAttackSpeed * damageConfig.minAttackSpeed) {
                 return;
             }
 
-            // Направление "спины" жертвы (для back/side/front).
+            Vector2 hitDir = ((Vector2)other.transform.position - (Vector2)transform.position).normalized;
+
+            // Урон считаем от моего СОБСТВЕННОГО движения:
+            //   -- камень быстро движется -> он агрессор (curling-like)
+            //   -- камень стоит и получил удар -> он агрессором не считается
+            //   -- спина/бок/лоб определяются по тому, в какую часть жертвы я попал
+            //      относительно её собственного направления движения.
+            Vector2 otherVel = other.PreCollisionVelocity;
             Vector2 victimFacing = otherVel.sqrMagnitude > 0.01f
                 ? otherVel.normalized
                 : -hitDir;
             float angle = Vector2.Angle(victimFacing, -hitDir);
 
             float speedFactor = Mathf.Clamp(
-                myApproach / Mathf.Max(0.01f, damageConfig.referenceAttackSpeed),
+                myVel.magnitude / Mathf.Max(0.01f, damageConfig.referenceAttackSpeed),
                 0f, damageConfig.maxSpeedMultiplier);
             int damage = Mathf.RoundToInt(
                 damageConfig.CalculateDamage(angle) * speedFactor);
 
-            Debug.Log($"[Combat] {name} -> {other.name}: угол={angle:F1} deg, closing={myApproach:F1} (x{speedFactor:F2}), урон={damage}");
-
             other.TakeDamage(damage, gameObject);
+        }
+
+        /// <summary>
+        /// Сброс камня: восстановление HP, bodyType Dynamic, обнуление velocity,
+        /// возврат на исходную позицию. Вызывается Restart-кнопкой.
+        /// </summary>
+        public void ResetTo(Vector3 position, Quaternion rotation)
+        {
+            CurrentHP = MaxHP;
+            rb.bodyType = RigidbodyType2D.Dynamic;
+            var col = GetComponent<Collider2D>();
+            if (col != null) col.enabled = true;
+
+            rb.linearVelocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+            transform.SetPositionAndRotation(position, rotation);
+
+            onHealthChanged?.Invoke(CurrentHP, MaxHP);
         }
 
         // Смерть
@@ -153,9 +157,7 @@ namespace CurlingRoyale.Combat
             Debug.Log($"[Combat] {name} уничтожен.");
             onDeath?.Invoke();
 
-            // Останаливаем движение но оставляем коллайдер включённым --
-            // чтобы мёртвый камень оставался в арене как препятствие (куда
-            // живые камни продолжают отскакивать).
+            // Коллайдер остаётся включённым -> мёртвый камень препятствие.
             rb.linearVelocity = Vector2.zero;
             rb.bodyType = RigidbodyType2D.Static;
         }
