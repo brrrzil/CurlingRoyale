@@ -101,16 +101,17 @@ namespace CurlingRoyale.Combat
             var other = collision.collider.GetComponent<StoneCombat>();
             if (other == null) return; // это не камень — игнорируем
 
-            var otherRb = other.GetComponent<Rigidbody2D>();
-
             // Направление удара: от меня к жертве.
             Vector2 hitDir = ((Vector2)other.transform.position - (Vector2)transform.position).normalized;
 
-            // МОЯ скорость сближения = моё движение в направлении жертвы.
-            // Стоящий камень при ударе = myApproach ≈ 0 → не наношу урон (только получаю).
-            // Касательный удар при быстром движении = myApproach маленькая → минимум урона.
-            // Лоб-в-лоб = каждый атакующий наносит (с кулдауном).
-            float myApproach = Vector2.Dot(rb.linearVelocity, hitDir);
+            // Моя скорость сближения: используем PRE-collision velocity (из FixedUpdate кэша),
+            // потому что в момент OnCollisionEnter2D rb.linearVelocity уже отражён impulse.
+            // Относительная скорость (relVel): я агрессор только если ДОГОНЯЮ жертву.
+            // Стоящий камень при таране = relVel ≈ 0 → не наношу урон, только получаю свой.
+            Vector2 myVel = cachedLinearVelocity;
+            Vector2 otherVel = other != null ? other.PreCollisionVelocity : Vector2.zero;
+            Vector2 relVel = myVel - otherVel;
+            float myApproach = Vector2.Dot(relVel, hitDir);
             if (myApproach < damageConfig.minAttackSpeed)
             {
                 Debug.Log($"[Combat] {name} \u2192 {other.name}: approach={myApproach:F2} ниже minAttackSpeed={damageConfig.minAttackSpeed} — пропускаем");
@@ -118,8 +119,8 @@ namespace CurlingRoyale.Combat
             }
 
             // Направление "спины" жертвы: куда жертва двигалась (или её «лицо» если стоит).
-            Vector2 victimFacing = (otherRb != null && otherRb.linearVelocity.sqrMagnitude > 0.01f)
-                ? otherRb.linearVelocity.normalized
+            Vector2 victimFacing = otherVel.sqrMagnitude > 0.01f
+                ? otherVel.normalized
                 : -hitDir;
             // Угол между "спиной" жертвы и направлением, откуда прилетел удар.
             // Угол 0° = прямо в лицо (лоб), 180° = в спину.

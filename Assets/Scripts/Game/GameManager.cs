@@ -1,10 +1,8 @@
 using System;
 using UnityEngine;
 using CurlingRoyale.Arena;
-using CurlingRoyale.Bots;
 using CurlingRoyale.Combat;
 using CurlingRoyale.Configs;
-using CurlingRoyale.Player;
 
 namespace CurlingRoyale.Game
 {
@@ -80,31 +78,9 @@ namespace CurlingRoyale.Game
 
         void Start()
         {
-            // Auto-inject: если у камня есть StoneCombat но нет ни PlayerController, ни BotController —
-            // считаем его ботом и добавляем BotController в runtime. Это спасает проект когда
-            // BotStone.prefab теряет ссылку на BotController (missing script в Editor).
-            InjectMissingBotControllers();
-
             // Авто-старт матча при загрузке сцены (для прототипа).
             // Позже заменить на UI-кнопку «Play».
             StartMatch();
-        }
-
-        private void InjectMissingBotControllers()
-        {
-            StoneCombat[] all = FindObjectsByType<StoneCombat>(FindObjectsSortMode.None);
-            int injected = 0;
-            for (int i = 0; i < all.Length; i++)
-            {
-                var s = all[i];
-                if (s == null) continue;
-                if (s.GetComponent<PlayerController>() != null) continue;
-                if (s.GetComponent<BotController>() != null) continue;
-                s.gameObject.AddComponent<BotController>();
-                injected++;
-            }
-            if (injected > 0)
-                Debug.Log($"[GameManager] Auto-injected {injected} BotController(s) на камни без контроллера.");
         }
 
         void OnDestroy()
