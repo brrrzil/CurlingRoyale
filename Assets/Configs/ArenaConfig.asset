@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CurlingRoyale.Configs.ArenaConfig
   initialRadius: 5.125
   finalRadius: 2.5
-  shrinkStartAliveCount: 3
+  shrinkStartAliveCount: 999
   shrinkDuration: 25
   edgeColliderPoints: 64
   bounciness: 0.9

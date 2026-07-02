@@ -23,6 +23,13 @@ namespace CurlingRoyale.Player
         public LineRenderer lineRenderer;
         public Transform chargeCircle;
 
+        [Header("Звук зарядки")]
+        [Tooltip("AudioSource для проигрывания зарядки. Если null -- GetComponent.")]
+        [SerializeField] private AudioSource chargeAudioSource;
+        [Tooltip("Клип, играемый при зарядке. Должен быть loop=true.")]
+        [SerializeField] private AudioClip chargeLoopClip;
+        [Range(0f, 1f)] [SerializeField] private float chargeLoopVolume = 0.4f;
+
         private CustomPhysicsBody physicsBody;
         private ReloadController reload;
         private Vector2 direction;
@@ -37,6 +44,7 @@ namespace CurlingRoyale.Player
             physicsBody = GetComponent<CustomPhysicsBody>();
             reload = GetComponent<ReloadController>();
             mainCam = Camera.main;
+            if (chargeAudioSource == null) chargeAudioSource = GetComponent<AudioSource>();
             HideChargeVisual();
         }
 
@@ -87,6 +95,14 @@ namespace CurlingRoyale.Player
 
             if (lineRenderer != null) lineRenderer.enabled = true;
             if (chargeCircle != null) chargeCircle.gameObject.SetActive(true);
+
+            if (chargeLoopClip != null && chargeAudioSource != null)
+            {
+                chargeAudioSource.clip = chargeLoopClip;
+                chargeAudioSource.loop = true;
+                chargeAudioSource.volume = chargeLoopVolume;
+                chargeAudioSource.Play();
+            }
         }
 
         private void ReleaseCharge(Vector2 pointerWorld)
@@ -100,6 +116,9 @@ namespace CurlingRoyale.Player
 
             physicsBody.ApplyForce(finalDir, force);
             HideChargeVisual();
+            // Stop charge loop.
+            if (chargeAudioSource != null && chargeAudioSource.isPlaying)
+                chargeAudioSource.Stop();
             // ReloadController автоматически перейдёт в IsReady=false после ApplyForce.
         }
 

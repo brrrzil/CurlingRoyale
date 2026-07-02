@@ -35,6 +35,11 @@ namespace CurlingRoyale.Bots
         public float ringEndRadius = 1.5f;
         public int ringSortingOrder = 10;
 
+        [Header("Звук зарядки")]
+        [SerializeField] private AudioSource chargeAudioSource;
+        [SerializeField] private AudioClip chargeLoopClip;
+        [Range(0f, 1f)] [SerializeField] private float chargeLoopVolume = 0.25f;
+
         // ─── Состояние ─────────────────────────────────────────────
         public State CurrentState { get; private set; } = State.Idle;
         private CustomPhysicsBody physicsBody;
@@ -209,6 +214,14 @@ namespace CurlingRoyale.Bots
             CurrentState = State.Charging;
             SetRingActive(true);
             UpdateRingVisual();
+
+            if (chargeLoopClip != null && chargeAudioSource != null)
+            {
+                chargeAudioSource.clip = chargeLoopClip;
+                chargeAudioSource.loop = true;
+                chargeAudioSource.volume = chargeLoopVolume;
+                chargeAudioSource.Play();
+            }
         }
 
         private void ReleaseShot()
@@ -218,6 +231,9 @@ namespace CurlingRoyale.Bots
             physicsBody.ApplyForce(currentDirection, force);
             SetRingActive(false);
             CurrentState = State.Released;
+
+            if (chargeAudioSource != null && chargeAudioSource.isPlaying)
+                chargeAudioSource.Stop();
         }
 
         // ─── Ring (программное создание) ──────────────────────────

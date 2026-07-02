@@ -44,11 +44,31 @@ namespace CurlingRoyale.Combat
         private Rigidbody2D rb;
         private float lastDamageTime = -999f;
 
+        // Кэш исходной позиции/поворота для ResetToOriginal() при Restart.
+        private Vector3 originalPosition;
+        private Quaternion originalRotation;
+
+        [Header("Звук столкновения")]
+        [Tooltip("AudioSource (созданный руками или автоматически) -- если ссылка не задана, используется GetComponent.")]
+        [SerializeField] private AudioSource audioSource;
+        [Tooltip("Клип, играемый при нанесении урона. Опционально.")]
+        [SerializeField] private AudioClip collisionHitClip;
+        [Tooltip("Минимальный нанесённый урон, чтобы проиграть звук (чтобы не пикало от касательных).")]
+        [Min(0)] [SerializeField] private int collisionHitMinDamage = 1;
+        [Range(0f, 1f)] [SerializeField] private float collisionHitVolume = 0.6f;
+
         void Awake()
         {
             rb = GetComponent<Rigidbody2D>();
             rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
             rb.linearDamping = 2.5f;
+
+            // Запоминаем стартовые координаты -- по ним Restart-кнопка вернёт камень.
+            originalPosition = transform.position;
+            originalRotation = transform.rotation;
+
+            if (audioSource == null)
+                audioSource = GetComponent<AudioSource>();
 
             if (damageConfig == null)
             {
@@ -130,20 +150,19 @@ namespace CurlingRoyale.Combat
             int damage = Mathf.RoundToInt(
                 damageConfig.CalculateDamage(angle) * speedFactor);
 
+            // Звук столкновения (только если урон реально нанесли).
+            if (damage >= collisionHitMinDamage && collisionHitClip != null && audioSource != null)
+                audioSource.PlayOneShot(collisionHitClip, collisionHitVolume);
+
             other.TakeDamage(damage, gameObject);
         }
 
         /// <summary>
-        /// Сброс камня: восстановление HP, bodyType Dynamic, обнуление velocity,
-        /// возврат на исходную позицию. Вызывается Restart-кнопкой.
+        /// Сброс камня на произвольную позицию. Вызывается Restart-кнопкой.
         /// </summary>
         public void ResetTo(Vector3 position, Quaternion rotation)
         {
             CurrentHP = MaxHP;
-            rb.bodyType = RigidbodyType2D.Dynamic;
-            var col = GetComponent<Collider2D>();
-            if (col != null) col.enabled = true;
-
             rb.linearVelocity = Vector2.zero;
             rb.angularVelocity = 0f;
             transform.SetPositionAndRotation(position, rotation);
@@ -151,15 +170,21 @@ namespace CurlingRoyale.Combat
             onHealthChanged?.Invoke(CurrentHP, MaxHP);
         }
 
+        /// <summary>
+        /// Сброс на исходную позицию, зафиксированную в Awake. Используется по умолчанию
+        /// Restart-кнопкой, когда отдельные Spawn Points не заданы.
+        /// </summary>
+        public void ResetToOriginal() => ResetTo(originalPosition, originalRotation);
+
         // Смерть
         private void Die()
         {
             Debug.Log($"[Combat] {name} уничтожен.");
             onDeath?.Invoke();
 
-            // Коллайдер остаётся включённым -> мёртвый камень препятствие.
+            // НЕ переводим в Static: мёртвый камень продолжает катиться при таране живыми.
+            // Только обнуляем скорость, чтобы не разлетался от инерции сразу после смерти.
             rb.linearVelocity = Vector2.zero;
-            rb.bodyType = RigidbodyType2D.Static;
         }
     }
 }
