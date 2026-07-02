@@ -160,10 +160,14 @@ namespace CurlingRoyale.Game
 
         private void UpdateShrinking()
         {
-            // Решаем, стартовать ли сжатие.
-            bool shouldShrink = arenaConfig.shrinkStartAliveCount > 0 &&
+            // Shrinking отключён если shrinkStartAliveCount в "сентиель" диапазоне:
+            // либо <= 1 (выкл), либо > 8 (>= 999 — наш disable-флаг).
+            // Корректный режим = 2..8 (FFA-2..FFA-8).
+            int threshold = arenaConfig.shrinkStartAliveCount;
+            bool enabled = threshold >= 2 && threshold <= 8;
+            bool shouldShrink = enabled &&
                                 AliveCount > 0 &&
-                                AliveCount <= arenaConfig.shrinkStartAliveCount;
+                                AliveCount <= threshold;
 
             if (shouldShrink && !wasShrinkingLastFrame)
             {

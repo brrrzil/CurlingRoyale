@@ -153,10 +153,11 @@ namespace CurlingRoyale.Combat
             Debug.Log($"[Combat] {name} уничтожен.");
             onDeath?.Invoke();
 
+            // Останаливаем движение но оставляем коллайдер включённым --
+            // чтобы мёртвый камень оставался в арене как препятствие (куда
+            // живые камни продолжают отскакивать).
             rb.linearVelocity = Vector2.zero;
             rb.bodyType = RigidbodyType2D.Static;
-            var col = GetComponent<Collider2D>();
-            if (col != null) col.enabled = false;
         }
     }
 }

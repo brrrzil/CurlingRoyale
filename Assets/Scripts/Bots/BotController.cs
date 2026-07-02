@@ -39,6 +39,7 @@ namespace CurlingRoyale.Bots
         public State CurrentState { get; private set; } = State.Idle;
         private CustomPhysicsBody physicsBody;
         private ReloadController reload;
+        private CurlingRoyale.Combat.StoneCombat combat;
         private Transform currentTarget;
         private Vector2 currentDirection;
         private float chargeStartTime;
@@ -54,6 +55,7 @@ namespace CurlingRoyale.Bots
         {
             physicsBody = GetComponent<CustomPhysicsBody>();
             reload = GetComponent<ReloadController>();
+            combat = GetComponent<CurlingRoyale.Combat.StoneCombat>();
             EnsureChargeRing();
         }
 
@@ -104,6 +106,14 @@ namespace CurlingRoyale.Bots
                 GameManager.Instance.State == GameManager.MatchState.InProgress)
             {
                 TrySubscribeIfNeeded();
+            }
+
+            // Мёртвый камень не пытается стрелять.
+            if (combat != null && combat.IsDead)
+            {
+                if (CurrentState != State.Idle) SetRingActive(false);
+                CurrentState = State.Idle;
+                return;
             }
 
             if (CurrentState == State.Idle) return;
