@@ -45,14 +45,8 @@ namespace CurlingRoyale.Combat
 
         void Awake()
         {
-            // Чистим legacy-дети HealthBar: старый URP/UGUI Canvas+Slider, которые ставились
-            // в префабах в Round 0–3 и занимают весь экран как огромные слайдеры.
-            // Наш runtime-канвас (HP_Canvas с Image-fill) создаётся в BuildCanvas ниже.
-            for (int i = transform.childCount - 1; i >= 0; i--)
-            {
-                DestroyImmediate(transform.GetChild(i).gameObject);
-            }
-
+            // Мы НЕ удаляем legacy-дети кодом. Если у тебя в префабе внутри HealthBar висят
+            // старые Canvas+Slider (UGUI), удали их вручную в редакторе (см. инструкцию в чате).
             BuildCanvas();
         }
 

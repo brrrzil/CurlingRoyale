@@ -38,6 +38,11 @@ namespace CurlingRoyale.Combat
         private Rigidbody2D rb;
         private float lastDamageTime = -999f;
 
+        /// <summary>Velocity ДО столкновения — кэшируется в FixedUpdate, чтобы OnCollisionEnter2D
+        /// мог использовать настоящую скорость до impulse.</summary>
+        public Vector2 PreCollisionVelocity => cachedLinearVelocity;
+        private Vector2 cachedLinearVelocity;
+
         void Awake()
         {
             rb = GetComponent<Rigidbody2D>();
