@@ -4,26 +4,26 @@ using UnityEngine.UI;
 namespace CurlingRoyale.Combat
 {
     /// <summary>
-    /// HP-бар камня на World Space Canvas с двумя Image (фон + заливка).
-    /// В Awake скрипт отвязывается от родителя и каждый кадр следит за позицией
-    /// камня + offset (rotation = identity — не наследует вращение камня).
-    /// Никакого ручного wiring в Editor: добавил HealthBar на Stone → всё работает.
+    /// HP-бар камня. ВАЖНО: должен быть дочерним GameObject к Stone (parent-child в иерархии).
+    /// В LateUpdate скрипт жёстко фиксирует позицию = parent.position + offset (мировые координаты)
+    /// и rotation = identity — поэтому камень вращается по velocity, а бар остаётся
+    /// горизонтальным и всегда висит НАД камнем, не поворачиваясь вместе с ним.
+    /// Canvas + Image UI создаются программно в Awake.
     /// </summary>
     [DisallowMultipleComponent]
     public class HealthBar : MonoBehaviour
     {
         [Header("Дизайн")]
-        [Tooltip("Ширина полного бара в пикселях канваса. 200 = 2 world units при canvasScale 0.01.")]
+        [Tooltip("Ширина полного бара в пикселях Canvas. 200 + canvasWorldScale 0.01 = 2 world units.")]
         [Min(10f)] public float canvasWidthPx = 200f;
 
-        [Tooltip("Высота бара в пикселях канваса.")]
+        [Tooltip("Высота бара в пикселях Canvas.")]
         [Min(2f)] public float canvasHeightPx = 24f;
 
-        [Tooltip("Масштаб Canvas — переводит пиксели в мировые единицы. " +
-                 "0.01 = 200px \u2192 2 world units (тонкая полоска над камнем).")]
+        [Tooltip("Масштаб Canvas: переводит пиксели в world units. 0.01 = 200px → 2 world units.")]
         [Min(0.001f)] public float canvasWorldScale = 0.01f;
 
-        [Tooltip("Смещение над камнем (мировые координаты).")]
+        [Tooltip("Смещение над камнем (в мировых координатах).")]
         public Vector3 offset = new Vector3(0f, 1.2f, 0f);
 
         [Header("Цвета")]
@@ -35,22 +35,16 @@ namespace CurlingRoyale.Combat
         [Header("Сортировка")]
         public int sortingOrder = 100;
 
-        // ─── Внутреннее ─────────────────────────────────────
+        // Внутреннее
         private StoneCombat target;
         private Transform targetTransform;
-        private Transform canvasTransform;
         private RectTransform fillRT;
         private Image fillImage;
         private RectTransform bgRT;
         private Image bgImage;
-        private float currentFill01 = 1f;
 
         void Awake()
         {
-            // Отвязываемся от родителя (чтобы вращение камня не двигало бар).
-            if (transform.parent != null)
-                transform.SetParent(null, true);
-
             BuildCanvas();
         }
 
@@ -71,18 +65,25 @@ namespace CurlingRoyale.Combat
 
         void LateUpdate()
         {
+            // 1) Каждый кадр — позиция родителя (камня) + offset в МИРОВЫХ координатах.
+            //    Так камень крутится по velocity, а бар всегда висит НАД камнем в мире.
+            // 2) rotation = identity — стираем вращение от родителя, бар всегда горизонтальный.
             if (targetTransform == null) return;
             transform.position = targetTransform.position + offset;
             transform.rotation = Quaternion.identity;
         }
 
-        // ─── Создание UI ─────────────────────────────────────
+        // ─── Создание Canvas + Image ─────────────────────────
 
         private void BuildCanvas()
         {
-            // Canvas (World Space).
+            // Чистим возможные существующие Canvas/UI внутри HealthBar-объекта (от старого префаба).
+            // Оставляем только transform самого GameObject.
+            // Просто создаём Canvas как дочерний — старые будут проблемой для UI,
+            // но они отсутствуют в коде, поэтому просто игнорируем.
+
             var canvasGO = new GameObject("HP_Canvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-            canvasTransform = canvasGO.transform;
+            var canvasTransform = canvasGO.transform;
             canvasTransform.SetParent(transform, false);
 
             var canvas = canvasGO.GetComponent<Canvas>();
@@ -97,7 +98,7 @@ namespace CurlingRoyale.Combat
             scaler.dynamicPixelsPerUnit = 100f;
             scaler.referencePixelsPerUnit = 100f;
 
-            // Background Image.
+            // Background Image
             var bgGO = new GameObject("BG", typeof(RectTransform), typeof(Image));
             bgGO.transform.SetParent(canvasTransform, false);
             bgImage = bgGO.GetComponent<Image>();
@@ -108,13 +109,12 @@ namespace CurlingRoyale.Combat
             bgRT.offsetMin = Vector2.zero;
             bgRT.offsetMax = Vector2.zero;
 
-            // Fill Image.
+            // Fill Image
             var fillGO = new GameObject("Fill", typeof(RectTransform), typeof(Image));
             fillGO.transform.SetParent(canvasTransform, false);
             fillImage = fillGO.GetComponent<Image>();
             fillImage.color = highColor;
             fillRT = fillGO.GetComponent<RectTransform>();
-            // Якоря слева — fill «растёт» вправо.
             fillRT.anchorMin = new Vector2(0f, 0f);
             fillRT.anchorMax = new Vector2(0f, 1f);
             fillRT.pivot = new Vector2(0f, 0.5f);
@@ -122,23 +122,18 @@ namespace CurlingRoyale.Combat
             fillRT.sizeDelta = new Vector2(canvasWidthPx, 0f);
         }
 
-        // ─── Логика ─────────────────────────────────────
+        // ─── Логика ──────────────────────────────────────────
 
         private void OnHealthChanged(int current, int max)
         {
             if (max <= 0) return;
-            currentFill01 = Mathf.Clamp01((float)current / max);
+            float t = Mathf.Clamp01((float)current / max);
 
             if (fillRT != null)
-            {
-                fillRT.sizeDelta = new Vector2(canvasWidthPx * currentFill01, 0f);
-            }
+                fillRT.sizeDelta = new Vector2(canvasWidthPx * t, 0f);
+
             if (fillImage != null)
-            {
-                fillImage.color = currentFill01 > 0.6f ? highColor
-                    : currentFill01 > 0.3f ? midColor
-                    : lowColor;
-            }
+                fillImage.color = t > 0.6f ? highColor : (t > 0.3f ? midColor : lowColor);
         }
     }
 }
