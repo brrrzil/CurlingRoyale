@@ -37,6 +37,7 @@ namespace CurlingRoyale.Player
         private float chargeStartTime;
         private bool isCharging;
         private Camera mainCam;
+        private bool wasDeadLastUpdate;
 
         // ─── Init ──────────────────────────────────────────────────
 
@@ -61,9 +62,14 @@ namespace CurlingRoyale.Player
 
         void Update()
         {
-            // Мёртвый игрок не может управлять камнем. После Restart (ResetToOriginal)
-            // currentHP>0 снова, и Update возобновится.
-            if (combat != null && combat.IsDead) return;
+            // Определяем переход: был мёртв -> стал жив. Это момент возрождения (после Restart).
+            bool isDead = combat != null && combat.IsDead;
+            if (wasDeadLastUpdate && !isDead) ResetPlayerState();
+            wasDeadLastUpdate = isDead;
+
+            // Мёртвый игрок не может управлять камнем. После ResetToOriginal -- currentHP>0
+            // снова, и Update возобновится.
+            if (isDead) return;
 
             if (mainCam == null) return;
 
@@ -126,6 +132,23 @@ namespace CurlingRoyale.Player
             if (chargeAudioSource != null && chargeAudioSource.isPlaying)
                 chargeAudioSource.Stop();
             // ReloadController автоматически перейдёт в IsReady=false после ApplyForce.
+        }
+
+        /// <summary>
+        /// Сбросить локальное состояние при возрождении (IsDead перешёл с true на false).
+        /// Сбрасывает зарядку/таймеры/визуал/аудио + форсирует ReloadController в Ready.
+        /// </summary>
+        private void ResetPlayerState()
+        {
+            isCharging = false;
+            chargeStartTime = 0f;
+            direction = Vector2.zero;
+            HideChargeVisual();
+            if (chargeAudioSource != null && chargeAudioSource.isPlaying) chargeAudioSource.Stop();
+            if (reload != null) reload.ForceReady();
+            // Показываем chargeRing если требуется.
+            if (chargeCircle != null && reload != null && reload.IsReady)
+                chargeCircle.gameObject.SetActive(true);
         }
 
         private void UpdateChargeVisual(Vector2 pointerWorld)
