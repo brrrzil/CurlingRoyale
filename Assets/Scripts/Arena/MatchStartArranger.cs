@@ -126,7 +126,6 @@ namespace CurlingRoyale.Arena
         public void Arrange()
         {
             hasArrangedOnce = true;
-        {
             // 1) Найти все камни на сцене.
             StoneCombat[] all = FindObjectsByType<StoneCombat>(FindObjectsSortMode.None);
             if (all == null || all.Length == 0)
