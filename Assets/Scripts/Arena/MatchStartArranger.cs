@@ -1,6 +1,7 @@
 using UnityEngine;
-using CurlingRoyale.Combat;
 using CurlingRoyale.Bots;
+using CurlingRoyale.Combat;
+using CurlingRoyale.Game;
 using CurlingRoyale.Player;
 
 namespace CurlingRoyale.Arena
