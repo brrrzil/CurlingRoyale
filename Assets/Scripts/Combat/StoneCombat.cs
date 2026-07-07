@@ -78,10 +78,17 @@ namespace CurlingRoyale.Combat
         void Start()
         {
             onHealthChanged?.Invoke(CurrentHP, MaxHP);
+
+            // Жёстко залочиваем bodyType = Dynamic. Никто и нигде (включая сторонние
+            // пакеты, плагины) не должен менять Rigidbody камня на Kinematic или Static.
+            if (rb != null) rb.bodyType = RigidbodyType2D.Dynamic;
         }
 
         void FixedUpdate()
         {
+            // Первый приоритет: bodyType должен быть Dynamic. Если кто-то поменял -- верни.
+            EnforceDynamicBodyType();
+
             // Кэшируем velocity ДО физического шага.
             cachedLinearVelocity = rb.linearVelocity;
 
@@ -172,15 +179,28 @@ namespace CurlingRoyale.Combat
         /// </summary>
         public void ResetToOriginal() => ResetTo(originalPosition, originalRotation);
 
+        // Сторож: каждый fixedUpdate возвращаем Dynamic, если что-то его изменило.
+        // По репорту: после смерти на 1 кадр bodyType меняется на Kinematic -- это
+        // может быть пакет или плагин. Мы переопределяем обратно в Dynamic и логируем кто виноват.
+        void EnforceDynamicBodyType()
+        {
+            if (rb != null && rb.bodyType != RigidbodyType2D.Dynamic)
+            {
+                Debug.LogWarning($"[Combat] {name}: bodyType != Dynamic (было {rb.bodyType}) -- форсирую Dynamic.");
+                rb.bodyType = RigidbodyType2D.Dynamic;
+            }
+        }
+
         // Смерть
         private void Die()
         {
             Debug.Log($"[Combat] {name} уничтожен.");
             onDeath?.Invoke();
 
-            // НЕ переводим в Static: мёртвый камень продолжает катиться при таране живыми.
-            // Только обнуляем скорость, чтобы не разлетался от инерции сразу после смерти.
+            // bodyType НЕ трогаем. Только обнуляем скорость, чтобы камень не разлетался
+            // от инерции в момент смерти.
             rb.linearVelocity = Vector2.zero;
+            EnforceDynamicBodyType();
         }
     }
 }

@@ -27,10 +27,6 @@ namespace CurlingRoyale.Audio
         [Header("Громкость")]
         [Range(0f, 1f)] [SerializeField] private float baseVolume = 0.7f;
 
-        [Header("Рандом pitch (разнообразие)")]
-        [Range(0.5f, 1.5f)] [SerializeField] private float minPitch = 0.85f;
-        [Range(0.5f, 1.5f)] [SerializeField] private float maxPitch = 1.15f;
-
         [Header("Spatial blend (0=2D, 1=3D)")]
         [Range(0f, 1f)] [SerializeField] private float spatialBlend = 0f;
 
@@ -73,8 +69,7 @@ namespace CurlingRoyale.Audio
             if (clip == null) return;
 
             float vol = Mathf.Clamp01(intensity) * baseVolume;
-            float pitch = Random.Range(minPitch, maxPitch);
-            source.pitch = pitch;
+            // pitch не трогаем (музыка/звуки звучат натурально).
             // Сначала создаём временный GameObject на позиции (если spatialBlend > 0).
             if (spatialBlend > 0.001f)
             {
