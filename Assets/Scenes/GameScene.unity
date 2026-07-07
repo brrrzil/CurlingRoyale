@@ -764,7 +764,6 @@ MonoBehaviour:
   endScreenPanel: {fileID: 1565630640}
   winnerText: {fileID: 202541506}
   restartButton: {fileID: 1506060937}
-  hideButton: {fileID: 0}
 --- !u!114 &1506060937
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1037,6 +1036,73 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4383550488976374149, guid: 04f91fb1a996b404eb838f6f779ebbe5, type: 3}
   m_PrefabInstance: {fileID: 1043750121152314365}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1735535421
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1735535424}
+  - component: {fileID: 1735535423}
+  - component: {fileID: 1735535422}
+  m_Layer: 0
+  m_Name: MusicManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1735535422
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1735535421}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9dcb32e64345bab4fb5dd624c3b546e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CurlingRoyale.Audio.SoundManager
+  collisionClips:
+  - {fileID: 8300000, guid: f29ff9739f1362a4f883c2dbb081dfe5, type: 3}
+  baseVolume: 0.7
+  spatialBlend: 0
+--- !u!114 &1735535423
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1735535421}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db093174735120b41a365dfc672ba616, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CurlingRoyale.Audio.MusicManager
+  musicClips:
+  - {fileID: 8300000, guid: 2eb0e38c14c783244a77b3bfecd12e01, type: 3}
+  shuffle: 1
+  volume: 0.5
+  delayBetweenTracks: 1.5
+  fadeInSeconds: 0.4
+--- !u!4 &1735535424
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1735535421}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 584, y: 386.12, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1937041650
 GameObject:
   m_ObjectHideFlags: 0
@@ -1369,3 +1435,4 @@ SceneRoots:
   - {fileID: 182136927}
   - {fileID: 1984228060}
   - {fileID: 421102424}
+  - {fileID: 1735535424}
