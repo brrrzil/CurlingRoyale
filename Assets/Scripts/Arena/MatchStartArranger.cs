@@ -72,12 +72,14 @@ namespace CurlingRoyale.Arena
 
             // Если мы уже пропустили MatchStart (подписка пришла ПОЗЖЕ чем первый
             // onStateChanged) -- расставить камни прямо сейчас по текущему состоянию.
+            // С задержкой 0.3s чтобы BotSpawner успел заспавнить ботов.
             var cur = GameManager.Instance.State;
             if (cur == GameManager.MatchState.MatchStart ||
                 cur == GameManager.MatchState.Menu)
             {
-                Debug.Log($"[MatchStartArranger] immediate Arrange (state={cur})");
-                Arrange();
+                Debug.Log($"[MatchStartArranger] delayed Arrange (state={cur})");
+                CancelInvoke(nameof(Arrange));
+                Invoke(nameof(Arrange), 0.3f);
             }
         }
 
@@ -98,7 +100,10 @@ namespace CurlingRoyale.Arena
             if (newState == GameManager.MatchState.MatchStart ||
                 newState == GameManager.MatchState.Menu)
             {
-                Arrange();
+                // Отложенный Arrange -- чтобы BotSpawner (задержка 0.1s) успел заспавнить ботов
+                // ДО первой расстановки. Иначе Arrange срабатывает только на игроке.
+                CancelInvoke(nameof(Arrange));
+                Invoke(nameof(Arrange), 0.3f);
             }
         }
 
