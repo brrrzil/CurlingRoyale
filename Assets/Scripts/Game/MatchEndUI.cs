@@ -28,9 +28,6 @@ namespace CurlingRoyale.Game
         [Tooltip("Button с подписью 'Restart'. Скрипт сам подписывается на клик.")]
         [SerializeField] private Button restartButton;
 
-        [Tooltip("Кнопка-крестик для скрытия без Restart (опционально).")]
-        [SerializeField] private Button hideButton;
-
         void Start()
         {
             if (endScreenPanel != null)
@@ -38,9 +35,6 @@ namespace CurlingRoyale.Game
 
             if (restartButton != null)
                 restartButton.onClick.AddListener(OnRestartPressed);
-
-            if (hideButton != null)
-                hideButton.onClick.AddListener(() => endScreenPanel?.SetActive(false));
 
             StartCoroutine(SubscribeWhenReady());
         }

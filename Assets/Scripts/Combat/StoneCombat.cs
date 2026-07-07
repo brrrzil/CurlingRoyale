@@ -49,13 +49,10 @@ namespace CurlingRoyale.Combat
         private Quaternion originalRotation;
 
         [Header("Звук столкновения")]
-        [Tooltip("AudioSource (созданный руками или автоматически) -- если ссылка не задана, используется GetComponent.")]
-        [SerializeField] private AudioSource audioSource;
-        [Tooltip("Клип, играемый при нанесении урона. Опционально.")]
-        [SerializeField] private AudioClip collisionHitClip;
-        [Tooltip("Минимальный нанесённый урон, чтобы проиграть звук (чтобы не пикало от касательных).")]
+        [Tooltip("Минимальный нанесённый урон, чтобы проиграть звук (касательные не пикают).")]
         [Min(0)] [SerializeField] private int collisionHitMinDamage = 1;
-        [Range(0f, 1f)] [SerializeField] private float collisionHitVolume = 0.6f;
+        [Tooltip("Базовый множитель громкости звука столкновения от 0 до 1.")]
+        [Range(0f, 1f)] [SerializeField] private float collisionHitIntensity = 0.7f;
 
         void Awake()
         {
@@ -66,9 +63,6 @@ namespace CurlingRoyale.Combat
             // Запоминаем стартовые координаты -- по ним Restart-кнопка вернёт камень.
             originalPosition = transform.position;
             originalRotation = transform.rotation;
-
-            if (audioSource == null)
-                audioSource = GetComponent<AudioSource>();
 
             if (damageConfig == null)
             {
@@ -150,9 +144,11 @@ namespace CurlingRoyale.Combat
             int damage = Mathf.RoundToInt(
                 damageConfig.CalculateDamage(angle) * speedFactor);
 
-            // Звук столкновения (только если урон реально нанесли).
-            if (damage >= collisionHitMinDamage && collisionHitClip != null && audioSource != null)
-                audioSource.PlayOneShot(collisionHitClip, collisionHitVolume);
+            // Звук столкновения через центральный SoundManager (один источник, не дублируется).
+            // Звук играется ОДИН раз -- оба камня вызывают SoundManager.Instance.PlayCollision,
+            // но он использует PlayOneShot и не прерывает уже играющие звуки.
+            if (damage >= collisionHitMinDamage && CurlingRoyale.Audio.SoundManager.Instance != null)
+                CurlingRoyale.Audio.SoundManager.Instance.PlayCollision(transform.position, collisionHitIntensity);
 
             other.TakeDamage(damage, gameObject);
         }

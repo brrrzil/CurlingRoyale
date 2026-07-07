@@ -4,34 +4,36 @@ namespace CurlingRoyale.Audio
 {
     /// <summary>
     /// Менеджер фоновой музыки.
-    /// Кинь на любой GameObject в первой сцене (например, GameManager),
-    /// перетащи AudioClip в musicClip. DontDestroyOnLoad -- живёт между сценами.
-    ///
-    /// Если clip не назначен, менеджер просто ничего не делает.
+    /// Кинь на любой GameObject в первой сцене (например, GameManager).
+    /// DontDestroyOnLoad -- живёт между сценами.
+    /// Если musicClips задан через inspector -- играет их в случайном порядке с shuffle.
+    /// Иначе пытается Resources.LoadAll\&lt;AudioClip\&gt;("Audio").
     /// </summary>
     [DisallowMultipleComponent]
     public class MusicManager : MonoBehaviour
     {
-        [Header("Клип")]
-        [Tooltip("Если задан -- проигрывается в loop начиная со Start().")]
-        [SerializeField] private AudioClip musicClip;
+        [Header("Клипы")]
+        [Tooltip("Список треков. Если пусто и shuffle=true -- берёт всё из Resources/Audio/.")]
+        [SerializeField] private AudioClip[] musicClips;
+
+        [Tooltip("Если true -- треки играются по кругу в случайном порядке. Иначе первый клип в loop.")]
+        [SerializeField] private bool shuffle = true;
 
         [Header("Громкость")]
         [Range(0f, 1f)] [SerializeField] private float volume = 0.5f;
 
         [Header("Поведение")]
-        [Tooltip("Если true -- не выключать музыку при MatchEnd.")]
-        [SerializeField] private bool keepPlayingOnMatchEnd = true;
+        [Tooltip("Задержка между треками при shuffle.")]
+        [Min(0f)] [SerializeField] private float delayBetweenTracks = 1.5f;
 
-        [Tooltip("Pause-resume через fade, если нужно (не обязательно).")]
-        [Range(0f, 2f)] [SerializeField] private float fadeInSeconds = 0.3f;
+        [Tooltip("Fade-in на старте.")]
+        [Range(0f, 2f)] [SerializeField] private float fadeInSeconds = 0.4f;
 
         private AudioSource source;
         private static MusicManager instance;
 
         void Awake()
         {
-            // Singleton.
             if (instance != null && instance != this)
             {
                 Destroy(gameObject);
@@ -43,36 +45,67 @@ namespace CurlingRoyale.Audio
             source = GetComponent<AudioSource>();
             if (source == null)
                 source = gameObject.AddComponent<AudioSource>();
-            source.loop = true;
+            source.loop = false;
             source.playOnAwake = false;
             source.volume = 0f;
+
+            // Fallback: если клипы не заданы -- загружаем все AudioClip из Resources/Audio.
+            if (musicClips == null || musicClips.Length == 0)
+            {
+                musicClips = Resources.LoadAll<AudioClip>("Audio");
+                // Из них исключаем Collision_Stone (это не музыка).
+            }
         }
 
         void Start()
         {
-            StartCoroutine(PlayAfterDelay());
+            if (musicClips == null || musicClips.Length == 0)
+            {
+                Debug.LogWarning("[MusicManager] musicClips не заданы и Resources/Audio не найдено -- музыка молчит.");
+                return;
+            }
+            if (shuffle) StartCoroutine(ShuffleLoop());
+            else StartCoroutine(PlaySingleLoop());
         }
 
-        System.Collections.IEnumerator PlayAfterDelay()
+        System.Collections.IEnumerator PlaySingleLoop()
         {
-            yield return null;
-            if (musicClip == null)
-            {
-                Debug.LogWarning("[MusicManager] musicClip не назначен -- музыка не играет.");
-                yield break;
-            }
-            source.clip = musicClip;
+            source.clip = musicClips[0];
             source.loop = true;
             source.Play();
-            float t = 0f;
+
             float start = Time.time;
-            while (t < volume)
+            while (source.volume < volume)
             {
-                t = Mathf.Lerp(0f, volume, (Time.time - start) / Mathf.Max(0.0001f, fadeInSeconds));
-                source.volume = Mathf.Min(t, volume);
+                source.volume = Mathf.Lerp(0f, volume, (Time.time - start) / Mathf.Max(0.0001f, fadeInSeconds));
                 yield return null;
             }
             source.volume = volume;
+        }
+
+        System.Collections.IEnumerator ShuffleLoop()
+        {
+            while (true)
+            {
+                var clip = musicClips[Random.Range(0, musicClips.Length)];
+                if (clip == null)
+                {
+                    yield return new WaitForSeconds(1f);
+                    continue;
+                }
+                source.clip = clip;
+                source.loop = false;
+                source.Play();
+                float start = Time.time;
+                while (source.volume < volume)
+                {
+                    source.volume = Mathf.Lerp(0f, volume, (Time.time - start) / Mathf.Max(0.0001f, fadeInSeconds));
+                    yield return null;
+                }
+                source.volume = volume;
+                yield return new WaitWhile(() => source.isPlaying);
+                yield return new WaitForSeconds(delayBetweenTracks);
+            }
         }
 
         public void PauseMusic() { if (source != null) source.Pause(); }
@@ -82,14 +115,15 @@ namespace CurlingRoyale.Audio
 
         public void SwapClip(AudioClip newClip)
         {
-            musicClip = newClip;
-            if (source != null && newClip != null)
-            {
-                source.Stop();
-                source.clip = newClip;
-                source.loop = true;
-                source.Play();
-            }
+            musicClips = new[] { newClip };
+            if (source != null) { source.Stop(); source.clip = newClip; source.loop = true; source.Play(); }
+        }
+
+        public void AddClip(AudioClip clip)
+        {
+            var arr = new System.Collections.Generic.List<AudioClip>(musicClips ?? new AudioClip[0]);
+            arr.Add(clip);
+            musicClips = arr.ToArray();
         }
     }
 }
