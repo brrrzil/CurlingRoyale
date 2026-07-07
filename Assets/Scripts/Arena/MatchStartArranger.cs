@@ -186,6 +186,8 @@ namespace CurlingRoyale.Arena
             {
                 float angleDeg = playerAngleDegrees + (i + 1) * arcDegrees;
                 float angleRad = angleDeg * Mathf.Deg2Rad;
+                // Расстояние от центра тоже берём из того же radius что и игрок
+                // ('та же база' что и игрок).
                 Vector3 pos = new Vector3(Mathf.Cos(angleRad) * radius, Mathf.Sin(angleRad) * radius, 0f);
                 var rb = botTransforms[i].GetComponent<Rigidbody2D>();
                 if (rb != null)
@@ -194,6 +196,7 @@ namespace CurlingRoyale.Arena
                     rb.angularVelocity = 0f;
                 }
                 botTransforms[i].SetPositionAndRotation(pos, Quaternion.identity);
+                Debug.Log($"[MatchStartArranger] bot[{i}] {botTransforms[i].name} -> {pos} (angle={angleDeg:F1}°)");
             }
         }
     }
