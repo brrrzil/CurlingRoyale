@@ -32,6 +32,7 @@ namespace CurlingRoyale.Arena
         [SerializeField] private Transform playerStoneOverride;
 
         private bool subscribed = false;
+        private bool hasArrangedOnce = false;
 
         void Awake()
         {
@@ -72,17 +73,20 @@ namespace CurlingRoyale.Arena
 
             // Если мы уже пропустили первое событие -- реагируем по текущему состоянию.
             var cur = GameManager.Instance.State;
-            if (cur == GameManager.MatchState.MatchStart)
+            if (cur == GameManager.MatchState.MatchStart || cur == GameManager.MatchState.Menu)
             {
-                // Боты уже есть -> сразу.
-                CancelInvoke(nameof(Arrange));
-                Arrange();
-            }
-            else if (cur == GameManager.MatchState.Menu)
-            {
-                // Только что загрузили сцену -- ждём пока бот-спавнер отработает.
-                CancelInvoke(nameof(Arrange));
-                Invoke(nameof(Arrange), 0.3f);
+                if (hasArrangedOnce)
+                {
+                    // После Restart -- боты уже есть, расставляем сразу.
+                    CancelInvoke(nameof(Arrange));
+                    Arrange();
+                }
+                else
+                {
+                    // Initial scene load -- ждём 0.3s пока BotSpawner отработает.
+                    CancelInvoke(nameof(Arrange));
+                    Invoke(nameof(Arrange), 0.3f);
+                }
             }
         }
 
@@ -100,16 +104,17 @@ namespace CurlingRoyale.Arena
         void OnGameStateChanged(GameManager.MatchState newState)
         {
             Debug.Log($"[MatchStartArranger] onStateChanged -> {newState}");
-            if (newState == GameManager.MatchState.MatchStart)
+            if (newState != GameManager.MatchState.MatchStart && newState != GameManager.MatchState.Menu) return;
+
+            if (hasArrangedOnce)
             {
-                // После Restart: боты уже заспавнены -- Arrange сразу, без задержки,
-                // иначе игрок 0.3s катится по инерции.
+                // Restart: боты уже есть -- Arrange сразу.
                 CancelInvoke(nameof(Arrange));
                 Arrange();
             }
-            else if (newState == GameManager.MatchState.Menu)
+            else
             {
-                // Initial scene load: BotSpawner.spawnDelay = 0.1s, ждём 0.3s чтобы все боты были.
+                // Initial scene load: BotSpawner.spawnDelay = 0.1s, ждём 0.3s.
                 CancelInvoke(nameof(Arrange));
                 Invoke(nameof(Arrange), 0.3f);
             }
@@ -119,6 +124,8 @@ namespace CurlingRoyale.Arena
         /// Расставить камень игрока на playerAngleDegrees и ботов по остальным равным углам.
         /// </summary>
         public void Arrange()
+        {
+            hasArrangedOnce = true;
         {
             // 1) Найти все камни на сцене.
             StoneCombat[] all = FindObjectsByType<StoneCombat>(FindObjectsSortMode.None);
