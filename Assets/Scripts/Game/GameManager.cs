@@ -93,6 +93,11 @@ namespace CurlingRoyale.Game
             {
                 playerStone.onDeath.RemoveListener(OnPlayerDied);
                 playerStone.onDeath.AddListener(OnPlayerDied);
+                Debug.Log($"[GameManager] playerStone={playerStone.name}, onDeath subscribed");
+            }
+            else
+            {
+                Debug.LogWarning("[GameManager] playerStone == NULL -- матч не закроется по смерти игрока.");
             }
 
             // Авто-старт матча при загрузке сцены (для прототипа).

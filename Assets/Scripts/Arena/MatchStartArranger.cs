@@ -35,11 +35,16 @@ namespace CurlingRoyale.Arena
 
         void Awake()
         {
-            if (playerStoneOverride != null) return;
+            if (playerStoneOverride != null)
+            {
+                Debug.Log($"[MatchStartArranger] Awake: playerStoneOverride={playerStoneOverride.name}");
+                return;
+            }
             if (autoFindStones)
             {
                 var pc = FindFirstObjectByType<PlayerController>(FindObjectsInactive.Include);
                 if (pc != null) playerStoneOverride = pc.transform;
+                Debug.Log($"[MatchStartArranger] Awake: autoFind -> PlayerController={(pc != null ? pc.transform.name : "НЕ НАЙДЕН")}");
             }
         }
 
@@ -63,12 +68,15 @@ namespace CurlingRoyale.Arena
             GameManager.Instance.onStateChanged -= OnGameStateChanged;
             GameManager.Instance.onStateChanged += OnGameStateChanged;
             subscribed = true;
+            Debug.Log("[MatchStartArranger] subscribed to GameManager.onStateChanged");
+
             // Если мы уже пропустили MatchStart (подписка пришла ПОЗЖЕ чем первый
             // onStateChanged) -- расставить камни прямо сейчас по текущему состоянию.
             var cur = GameManager.Instance.State;
             if (cur == GameManager.MatchState.MatchStart ||
                 cur == GameManager.MatchState.Menu)
             {
+                Debug.Log($"[MatchStartArranger] immediate Arrange (state={cur})");
                 Arrange();
             }
         }
@@ -86,6 +94,7 @@ namespace CurlingRoyale.Arena
 
         void OnGameStateChanged(GameManager.MatchState newState)
         {
+            Debug.Log($"[MatchStartArranger] onStateChanged -> {newState}");
             if (newState == GameManager.MatchState.MatchStart ||
                 newState == GameManager.MatchState.Menu)
             {
@@ -100,7 +109,12 @@ namespace CurlingRoyale.Arena
         {
             // 1) Найти все камни на сцене.
             StoneCombat[] all = FindObjectsByType<StoneCombat>(FindObjectsSortMode.None);
-            if (all == null || all.Length == 0) return;
+            if (all == null || all.Length == 0)
+            {
+                Debug.LogWarning("[MatchStartArranger] Arrange: 0 StoneCombat в сцене.");
+                return;
+            }
+            Debug.Log($"[MatchStartArranger] Arrange: found {all.Length} StoneCombat");
 
             // 2) Разделить на player и bots.
             var botTransforms = new System.Collections.Generic.List<Transform>();
@@ -126,6 +140,8 @@ namespace CurlingRoyale.Arena
                     botTransforms.Add(s.transform);
             }
 
+            Debug.Log($"[MatchStartArranger] Arrange: player={(playerT != null ? playerT.name : "NULL")}, bots={botTransforms.Count}");
+
             // 3) Поставить игрока на playerAngleDegrees.
             if (playerT != null)
             {
@@ -138,6 +154,11 @@ namespace CurlingRoyale.Arena
                     rb.angularVelocity = 0f;
                 }
                 playerT.SetPositionAndRotation(pos, Quaternion.identity);
+                Debug.Log($"[MatchStartArranger] player {playerT.name} -> {pos}");
+            }
+            else
+            {
+                Debug.LogWarning("[MatchStartArranger] playerT == null -- игрок НЕ позиционируется.");
             }
 
             // 4) Поставить ботов по равным углам, начиная с правого.
