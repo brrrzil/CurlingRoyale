@@ -24,9 +24,12 @@ namespace CurlingRoyale.Bots
         [Min(1f)] public float maxForce = 14f;
         [Min(0f)] public float minChargeTime = 0.6f;
         [Min(0.1f)] public float maxChargeTime = 1.4f;
-        [Range(0f, 60f)] public float aimSpreadDegrees = 18f;
+        [Range(0f, 60f)] public float aimSpreadDegrees = 12f;
         [Range(0f, 1f)] public float randomTargetChance = 0.15f;
         [Min(0.1f)] public float cooldownDuration = 1.2f;
+        [Tooltip("Дистанция опережения точки попадания за целью (мировые единицы). " +
+                 "Чем больше, тем глубже бот пытается бить в спину. 0 = фронтальный удар.")]
+        [Min(0f)] [SerializeField] private float leadDistance = 1.6f;
 
         [Header("Цвета charge ring (авто-создаваемого)")]
         public Color ringMinColor = new Color(0.3f, 0.85f, 0.4f, 0.85f);
@@ -196,14 +199,28 @@ namespace CurlingRoyale.Bots
                 return;
             }
 
+            // Логика 'целиться в спину':
+            //   -- Подвижная цель: целимся в точку на leadDistance ПОЗАДИ неё (против направления движения).
+            //      Камень летит через позицию цели, попадает ей в спину.
+            //   -- Стоящая цель: целимся прямо в неё (фронтальный удар, низкий урон).
             Vector2 toTarget = (Vector2)currentTarget.position - (Vector2)transform.position;
-            Vector2 targetFacing = currentTarget.TryGetComponent<Rigidbody2D>(out var rb) && rb.linearVelocity.sqrMagnitude > 0.05f
-                ? rb.linearVelocity.normalized
-                : -toTarget.normalized;
+            Vector2 aimDir;
+
+            var targetRb = currentTarget.GetComponent<Rigidbody2D>();
+            if (targetRb != null && targetRb.linearVelocity.sqrMagnitude > 0.01f)
+            {
+                Vector2 backTarget = (Vector2)currentTarget.position
+                                     - targetRb.linearVelocity.normalized * leadDistance;
+                aimDir = (backTarget - (Vector2)transform.position).normalized;
+            }
+            else
+            {
+                aimDir = toTarget.normalized;
+            }
 
             float spread = Random.Range(-aimSpreadDegrees, aimSpreadDegrees);
-            currentDirection = (Quaternion.Euler(0, 0, spread) * (Vector3)targetFacing).normalized;
-            aimTimer = Random.Range(0.15f, 0.5f);
+            currentDirection = (Quaternion.Euler(0, 0, spread) * (Vector3)aimDir).normalized;
+            aimTimer = Random.Range(0.12f, 0.35f);
             CurrentState = State.Aiming;
         }
 
