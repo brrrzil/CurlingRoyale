@@ -64,6 +64,26 @@ namespace CurlingRoyale.Arena
                     Mathf.Sin(angle) * currentRadius);
             }
             edge.points = pts;
+
+            // Применяем bounciness/friction к EdgeCollider2D через PhysicsMaterial2D.
+            // bounciness=0 — камни скользят вдоль борта, bounciness=1 — абсолютно упругий отскок.
+            if (config != null)
+            {
+                if (edge.sharedMaterial == null || edge.sharedMaterial.name != $"ArenaBorderMat_{name}")
+                {
+                    var mat = new PhysicsMaterial2D($"ArenaBorderMat_{name}")
+                    {
+                        bounciness = config.bounciness,
+                        friction = config.friction
+                    };
+                    edge.sharedMaterial = mat;
+                }
+                else
+                {
+                    edge.sharedMaterial.bounciness = config.bounciness;
+                    edge.sharedMaterial.friction = config.friction;
+                }
+            }
         }
 
         public float CurrentRadius => currentRadius;

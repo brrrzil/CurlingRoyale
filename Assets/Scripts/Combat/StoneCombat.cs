@@ -24,6 +24,11 @@ namespace CurlingRoyale.Combat
         [Tooltip("Порог скорости ниже которого rotation не обновляется (стоящий камень не дрожит).")]
         [Min(0f)] public float rotationVelocityThreshold = 0.2f;
 
+        [Header("Физика")]
+        [Tooltip("Linear damping для Rigidbody2D камня. Чем выше -- тем быстрее камень останавливается после удара. " +
+                 "Задаётся здесь чтобы не хардкодить -- используется в Awake.")]
+        [Min(0f)] [SerializeField] private float linearDampingValue = 2.5f;
+
         [Header("События (для UI и VFX)")]
         public UnityEvent<int, int> onHealthChanged = new UnityEvent<int, int>(); // (current, max)
         public UnityEvent onDamageTaken = new UnityEvent();
@@ -58,7 +63,8 @@ namespace CurlingRoyale.Combat
         {
             rb = GetComponent<Rigidbody2D>();
             rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
-            rb.linearDamping = 2.5f;
+            // Применяем damping из сериализованного поля. Если ноль -- берём как есть.
+            if (linearDampingValue > 0f) rb.linearDamping = linearDampingValue;
 
             // Запоминаем стартовые координаты -- по ним Restart-кнопка вернёт камень.
             originalPosition = transform.position;
