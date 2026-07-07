@@ -182,7 +182,7 @@ GameObject:
   - component: {fileID: 202541507}
   - component: {fileID: 202541506}
   m_Layer: 5
-  m_Name: Text (TMP)
+  m_Name: EndText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -762,9 +762,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CurlingRoyale.Game.MatchEndUI
   endScreenPanel: {fileID: 1565630640}
-  winnerText: {fileID: 0}
+  winnerText: {fileID: 202541506}
   restartButton: {fileID: 1506060937}
-  respawnPoints: []
   hideButton: {fileID: 0}
 --- !u!114 &1506060937
 MonoBehaviour:
@@ -1012,7 +1011,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.500183, y: 0.500183, z: 1}
+  m_LocalScale: {x: 1.025, y: 1.025, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1937041651}
