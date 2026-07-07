@@ -63,6 +63,14 @@ namespace CurlingRoyale.Arena
             GameManager.Instance.onStateChanged -= OnGameStateChanged;
             GameManager.Instance.onStateChanged += OnGameStateChanged;
             subscribed = true;
+            // Если мы уже пропустили MatchStart (подписка пришла ПОЗЖЕ чем первый
+            // onStateChanged) -- расставить камни прямо сейчас по текущему состоянию.
+            var cur = GameManager.Instance.State;
+            if (cur == GameManager.MatchState.MatchStart ||
+                cur == GameManager.MatchState.Menu)
+            {
+                Arrange();
+            }
         }
 
         void Update()

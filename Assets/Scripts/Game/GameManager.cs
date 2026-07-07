@@ -49,6 +49,11 @@ namespace CurlingRoyale.Game
                  "Если null — арена остаётся статичной (без shrinking).")]
         [SerializeField] private ArenaBorder arenaBorder;
 
+        [Header("Player (опционально)")]
+        [Tooltip("StoneCombat игрока. Если задан — матч завершается при IsDead игрока. " +
+                 "Если null — авто-поиск первого PlayerController в сцене, либо матч завершается только при aliveCount <= 1.")]
+        [SerializeField] private StoneCombat playerStone;
+
         public MatchState State { get; private set; } = MatchState.Menu;
         public float PhaseTimeRemaining { get; private set; }
         public int AliveCount { get; private set; }
@@ -78,6 +83,18 @@ namespace CurlingRoyale.Game
 
         void Start()
         {
+            // Авто-поиск игрока для завершения матча по IsDead.
+            if (playerStone == null)
+            {
+                var pc = FindFirstObjectByType<CurlingRoyale.Player.PlayerController>(FindObjectsInactive.Include);
+                if (pc != null) playerStone = pc.GetComponentInParent<StoneCombat>();
+            }
+            if (playerStone != null)
+            {
+                playerStone.onDeath.RemoveListener(OnPlayerDied);
+                playerStone.onDeath.AddListener(OnPlayerDied);
+            }
+
             // Авто-старт матча при загрузке сцены (для прототипа).
             // Позже заменить на UI-кнопку «Play».
             StartMatch();
@@ -85,7 +102,21 @@ namespace CurlingRoyale.Game
 
         void OnDestroy()
         {
-            if (Instance == this) Instance = null;
+            if (Instance == this)
+            {
+                if (playerStone != null) playerStone.onDeath.RemoveListener(OnPlayerDied);
+                Instance = null;
+            }
+        }
+
+        /// <summary>
+        /// Если камню игрока осталось жить -- матч немедленно завершается
+        /// (не ждём aliveCount &lt;= 1).
+        /// </summary>
+        public void OnPlayerDied()
+        {
+            if (State == MatchState.MatchEnd || State == MatchState.Menu) return;
+            EndMatch();
         }
 
         // ─── Управление состоянием ──────────────────────────────────
