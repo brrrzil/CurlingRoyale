@@ -70,14 +70,17 @@ namespace CurlingRoyale.Arena
             subscribed = true;
             Debug.Log("[MatchStartArranger] subscribed to GameManager.onStateChanged");
 
-            // Если мы уже пропустили MatchStart (подписка пришла ПОЗЖЕ чем первый
-            // onStateChanged) -- расставить камни прямо сейчас по текущему состоянию.
-            // С задержкой 0.3s чтобы BotSpawner успел заспавнить ботов.
+            // Если мы уже пропустили первое событие -- реагируем по текущему состоянию.
             var cur = GameManager.Instance.State;
-            if (cur == GameManager.MatchState.MatchStart ||
-                cur == GameManager.MatchState.Menu)
+            if (cur == GameManager.MatchState.MatchStart)
             {
-                Debug.Log($"[MatchStartArranger] delayed Arrange (state={cur})");
+                // Боты уже есть -> сразу.
+                CancelInvoke(nameof(Arrange));
+                Arrange();
+            }
+            else if (cur == GameManager.MatchState.Menu)
+            {
+                // Только что загрузили сцену -- ждём пока бот-спавнер отработает.
                 CancelInvoke(nameof(Arrange));
                 Invoke(nameof(Arrange), 0.3f);
             }
@@ -97,11 +100,16 @@ namespace CurlingRoyale.Arena
         void OnGameStateChanged(GameManager.MatchState newState)
         {
             Debug.Log($"[MatchStartArranger] onStateChanged -> {newState}");
-            if (newState == GameManager.MatchState.MatchStart ||
-                newState == GameManager.MatchState.Menu)
+            if (newState == GameManager.MatchState.MatchStart)
             {
-                // Отложенный Arrange -- чтобы BotSpawner (задержка 0.1s) успел заспавнить ботов
-                // ДО первой расстановки. Иначе Arrange срабатывает только на игроке.
+                // После Restart: боты уже заспавнены -- Arrange сразу, без задержки,
+                // иначе игрок 0.3s катится по инерции.
+                CancelInvoke(nameof(Arrange));
+                Arrange();
+            }
+            else if (newState == GameManager.MatchState.Menu)
+            {
+                // Initial scene load: BotSpawner.spawnDelay = 0.1s, ждём 0.3s чтобы все боты были.
                 CancelInvoke(nameof(Arrange));
                 Invoke(nameof(Arrange), 0.3f);
             }
@@ -147,7 +155,12 @@ namespace CurlingRoyale.Arena
 
             Debug.Log($"[MatchStartArranger] Arrange: player={(playerT != null ? playerT.name : "NULL")}, bots={botTransforms.Count}");
 
-            // 3) Поставить игрока на playerAngleDegrees.
+            // 3) Общий круг: 1 player + N bots = N+1 участников.
+            //    Делим 360° на равные арки между всеми.
+            int totalCount = botTransforms.Count + (playerT != null ? 1 : 0);
+            float arcDegrees = totalCount > 0 ? 360f / totalCount : 360f;
+
+            // 4) Поставить игрока на playerAngleDegrees (занимает одну из N+1 позиций).
             if (playerT != null)
             {
                 float pa = playerAngleDegrees * Mathf.Deg2Rad;
@@ -159,18 +172,19 @@ namespace CurlingRoyale.Arena
                     rb.angularVelocity = 0f;
                 }
                 playerT.SetPositionAndRotation(pos, Quaternion.identity);
-                Debug.Log($"[MatchStartArranger] player {playerT.name} -> {pos}");
+                Debug.Log($"[MatchStartArranger] player {playerT.name} -> {pos} (arc={arcDegrees:F1}°)");
             }
             else
             {
                 Debug.LogWarning("[MatchStartArranger] playerT == null -- игрок НЕ позиционируется.");
             }
 
-            // 4) Поставить ботов по равным углам, начиная с правого.
+            // 5) Боты на остальных позициях круга (на равных отрезках от игрока).
+            //    Угол бота i = playerAngleDegrees + (i+1) * arcDegrees.
             int n = botTransforms.Count;
             for (int i = 0; i < n; i++)
             {
-                float angleDeg = (i / (float)n) * 360f;
+                float angleDeg = playerAngleDegrees + (i + 1) * arcDegrees;
                 float angleRad = angleDeg * Mathf.Deg2Rad;
                 Vector3 pos = new Vector3(Mathf.Cos(angleRad) * radius, Mathf.Sin(angleRad) * radius, 0f);
                 var rb = botTransforms[i].GetComponent<Rigidbody2D>();
