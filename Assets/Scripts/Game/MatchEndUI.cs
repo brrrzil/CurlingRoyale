@@ -8,44 +8,49 @@ namespace CurlingRoyale.Game
     /// <summary>
     /// End-game экран: показывает победителя (TextMeshPro) и кнопку Restart.
     ///
-    /// Как использовать:
-    /// 1. Создай Canvas (ScreenSpace-Overlay).
-    /// 2. Внутри Panel (полупрозрачный фон) с TextMeshPro -- winnerText, и Button -- restartButton.
-    /// 3. Перетащи Canvas/panel в это поле, TextMeshPro/Button -- в соответствующие поля.
-    ///
-    /// Победитель определяется как ЕДИНСТВЕННЫЙ живой StoneCombat на момент конца матча.
-    /// Если не осталось живых -- "Ничья (все погибли)".
+    /// Как подключить:
+    /// 1. Любой GameObject (часто сама Panel). Укажи endScreenPanel и winnerText(TMP).
+    /// 2. Назначь restartButton -- его клик вызовет Reset.
+    /// 3. GameManager.onStateChanged -> MatchEnd -- показ панели.
     /// </summary>
     public class MatchEndUI : MonoBehaviour
     {
         [Header("UI")]
-        [Tooltip("Panel с TextMeshPro + Button, скрывается в начале матча.")]
+        [Tooltip("Panel с TextMeshPro + Button. Если ссылка == this.gameObject, " +
+                 "сам скрипт НЕ деактивирует его -- это не требуется, т.к. он уже inactive в инспекторе.")]
         [SerializeField] private GameObject endScreenPanel;
 
         [Tooltip("TextMeshPro -- 'Победил: ...' / 'Ничья'")]
         [SerializeField] private TMP_Text winnerText;
 
-        [Tooltip("Button с подписью 'Restart'. Скрипт сам подписывается на клик.")]
+        [Tooltip("Button с подписью 'Restart'.")]
         [SerializeField] private Button restartButton;
+
+        private bool subscribed = false;
 
         void Start()
         {
-            if (endScreenPanel != null)
+            // Спрятать панель в начале матча. Если панель == this.gameObject, не трогать -- иначе
+            // деактивируем свой же MonoBehaviour, и coroutines не запускаются.
+            if (endScreenPanel != null && endScreenPanel != gameObject && endScreenPanel.activeSelf)
                 endScreenPanel.SetActive(false);
 
             if (restartButton != null)
                 restartButton.onClick.AddListener(OnRestartPressed);
-
-            StartCoroutine(SubscribeWhenReady());
         }
 
-        System.Collections.IEnumerator SubscribeWhenReady()
+        void Update()
         {
-            float deadline = Time.time + 2f;
-            while (GameManager.Instance == null && Time.time < deadline)
-                yield return null;
-            if (GameManager.Instance != null)
-                GameManager.Instance.onStateChanged += OnStateChanged;
+            // Lazy-подписка на GameManager до победного.
+            if (!subscribed) TrySubscribe();
+        }
+
+        void TrySubscribe()
+        {
+            if (GameManager.Instance == null) return;
+            GameManager.Instance.onStateChanged -= OnStateChanged;
+            GameManager.Instance.onStateChanged += OnStateChanged;
+            subscribed = true;
         }
 
         void OnDestroy()
@@ -57,13 +62,16 @@ namespace CurlingRoyale.Game
         void OnStateChanged(GameManager.MatchState newState)
         {
             if (endScreenPanel == null) return;
+
             if (newState == GameManager.MatchState.MatchEnd)
             {
+                if (!endScreenPanel.activeSelf) endScreenPanel.SetActive(true);
                 ShowEndScreen();
             }
-            else
+            else if (newState == GameManager.MatchState.InProgress)
             {
-                endScreenPanel.SetActive(false);
+                if (endScreenPanel != gameObject && endScreenPanel.activeSelf)
+                    endScreenPanel.SetActive(false);
             }
         }
 
@@ -90,8 +98,6 @@ namespace CurlingRoyale.Game
                 else
                     winnerText.text = $"Матч окончен ({aliveCount} живых)";
             }
-
-            endScreenPanel.SetActive(true);
         }
 
         void OnRestartPressed()
@@ -111,7 +117,9 @@ namespace CurlingRoyale.Game
                 s.ResetToOriginal();
             }
 
-            endScreenPanel?.SetActive(false);
+            if (endScreenPanel != null && endScreenPanel != gameObject)
+                endScreenPanel.SetActive(false);
+
             GameManager.Instance.StartMatch();
         }
     }
