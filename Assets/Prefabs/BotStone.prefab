@@ -226,10 +226,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 74570d97add2cd948afd0e2694b7462d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CurlingRoyale.Combat.HealthBar
-  canvasWidthPx: 200
-  canvasHeightPx: 24
+  canvasWidthPx: 100
+  canvasHeightPx: 12
   canvasWorldScale: 0.01
-  offset: {x: 0, y: 1.2, z: 0}
+  offset: {x: 0, y: 0.5, z: 0}
   highColor: {r: 0.3, g: 0.85, b: 0.3, a: 1}
   midColor: {r: 0.95, g: 0.85, b: 0.3, a: 1}
   lowColor: {r: 0.95, g: 0.3, b: 0.3, a: 1}
@@ -670,6 +670,8 @@ MonoBehaviour:
   onDeath:
     m_PersistentCalls:
       m_Calls: []
+  collisionHitMinDamage: 1
+  collisionHitIntensity: 0.7
 --- !u!114 &2261569622813082235
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -715,3 +717,6 @@ MonoBehaviour:
   ringStartRadius: 0.5
   ringEndRadius: 1.5
   ringSortingOrder: 10
+  chargeAudioSource: {fileID: 0}
+  chargeLoopClip: {fileID: 0}
+  chargeLoopVolume: 0.25
