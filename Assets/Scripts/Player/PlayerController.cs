@@ -32,6 +32,7 @@ namespace CurlingRoyale.Player
 
         private CustomPhysicsBody physicsBody;
         private ReloadController reload;
+        private CurlingRoyale.Combat.StoneCombat combat;
         private Vector2 direction;
         private float chargeStartTime;
         private bool isCharging;
@@ -43,6 +44,7 @@ namespace CurlingRoyale.Player
         {
             physicsBody = GetComponent<CustomPhysicsBody>();
             reload = GetComponent<ReloadController>();
+            combat = GetComponent<CurlingRoyale.Combat.StoneCombat>();
             mainCam = Camera.main;
             if (chargeAudioSource == null) chargeAudioSource = GetComponent<AudioSource>();
             HideChargeVisual();
@@ -59,6 +61,10 @@ namespace CurlingRoyale.Player
 
         void Update()
         {
+            // Мёртвый игрок не может управлять камнем. После Restart (ResetToOriginal)
+            // currentHP>0 снова, и Update возобновится.
+            if (combat != null && combat.IsDead) return;
+
             if (mainCam == null) return;
 
             Vector2? pointerWorld = GetPointerWorldPosition();

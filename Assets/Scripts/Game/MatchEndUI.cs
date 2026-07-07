@@ -8,68 +8,40 @@ namespace CurlingRoyale.Game
     /// <summary>
     /// End-game экран: показывает победителя (TextMeshPro) и кнопку Restart.
     ///
-    /// Подключение:
-    /// 1. Повесь скрипт на любой GameObject (часто -- сама Panel).
-    /// 2. Если Inspector-поля НЕ заданы, скрипт попробует найти:
-    ///    -- endScreenPanel: первый ребёнок Canvas.
-    ///    -- winnerText: первая TMP_Text в сцене.
-    ///    -- restartButton: первая Button в сцене.
-    /// 3. Можно не задавать -- скрипт работает с минимальной диагностикой (Warning в Console).
+    /// Как подключить:
+    /// 1. Любой GameObject (часто сама Panel). Укажи endScreenPanel и winnerText(TMP).
+    /// 2. Назначь restartButton -- его клик вызовет Reset.
+    /// 3. GameManager.onStateChanged -> MatchEnd -- показ панели.
     /// </summary>
     public class MatchEndUI : MonoBehaviour
     {
-        [Header("UI (опционально, авто-фоллбэк)")]
-        [Tooltip("Panel с TextMeshPro + Button. Если null -- берём первый Canvas на сцене.")]
+        [Header("UI")]
+        [Tooltip("Panel с TextMeshPro + Button. Если ссылка == this.gameObject, " +
+                 "сам скрипт НЕ деактивирует его -- это не требуется, т.к. он уже inactive в инспекторе.")]
         [SerializeField] private GameObject endScreenPanel;
 
-        [Tooltip("TextMeshPro 'Победил: ...' / 'Ничья'. Если null -- первая TMP_Text на сцене.")]
+        [Tooltip("TextMeshPro -- 'Победил: ...' / 'Ничья'")]
         [SerializeField] private TMP_Text winnerText;
 
-        [Tooltip("Button для Restart. Если null -- первая Button на сцене.")]
+        [Tooltip("Button с подписью 'Restart'.")]
         [SerializeField] private Button restartButton;
 
         private bool subscribed = false;
 
-        void Awake()
-        {
-            // Авто-фоллбэк если пользователь не задал поля в инспекторе.
-            if (endScreenPanel == null)
-            {
-                var canvas = FindFirstObjectByType<Canvas>();
-                if (canvas != null) { endScreenPanel = canvas.gameObject; Debug.LogWarning($"[MatchEndUI] endScreenPanel не задан -- использую первую Canvas ({canvas.name})."); }
-            }
-            if (winnerText == null)
-            {
-                var txt = FindFirstObjectByType<TMP_Text>();
-                if (txt != null) { winnerText = txt; Debug.LogWarning($"[MatchEndUI] winnerText не задан -- использую первый TMP_Text ({txt.name})."); }
-            }
-            if (restartButton == null)
-            {
-                var btn = FindFirstObjectByType<Button>();
-                if (btn != null) { restartButton = btn; Debug.LogWarning($"[MatchEndUI] restartButton не задан -- использую первую Button ({btn.name})."); }
-            }
-        }
-
         void Start()
         {
-            // Спрятать панель в начале матча. Если панель == this.gameObject -- пропускаем
-            // (иначе деактивируем свой же MonoBehaviour).
+            // Спрятать панель в начале матча. Если панель == this.gameObject, не трогать -- иначе
+            // деактивируем свой же MonoBehaviour, и coroutines не запускаются.
             if (endScreenPanel != null && endScreenPanel != gameObject && endScreenPanel.activeSelf)
                 endScreenPanel.SetActive(false);
 
             if (restartButton != null)
-            {
-                restartButton.onClick.RemoveListener(OnRestartPressed);
                 restartButton.onClick.AddListener(OnRestartPressed);
-            }
-            else
-            {
-                Debug.LogWarning("[MatchEndUI] restartButton всё ещё null -- OnRestartPressed не подключён.");
-            }
         }
 
         void Update()
         {
+            // Lazy-подписка на GameManager до победного.
             if (!subscribed) TrySubscribe();
         }
 
@@ -81,12 +53,6 @@ namespace CurlingRoyale.Game
             subscribed = true;
         }
 
-        void OnEnable()
-        {
-            // Если панель была скрыта в Start, а теперь включена -- пробуем подписаться ещё раз.
-            if (!subscribed) TrySubscribe();
-        }
-
         void OnDestroy()
         {
             if (GameManager.Instance != null)
@@ -95,12 +61,11 @@ namespace CurlingRoyale.Game
 
         void OnStateChanged(GameManager.MatchState newState)
         {
-            Debug.Log($"[MatchEndUI] state -> {newState}, panel={(endScreenPanel != null ? endScreenPanel.name : "null")}, subscribed={subscribed}");
-
             if (endScreenPanel == null) return;
 
             if (newState == GameManager.MatchState.MatchEnd)
             {
+                if (!endScreenPanel.activeSelf) endScreenPanel.SetActive(true);
                 ShowEndScreen();
             }
             else if (newState == GameManager.MatchState.InProgress)
@@ -133,17 +98,6 @@ namespace CurlingRoyale.Game
                 else
                     winnerText.text = $"Матч окончен ({aliveCount} живых)";
             }
-            else
-            {
-                Debug.LogWarning("[MatchEndUI] winnerText == null -- невозможно показать имя победителя.");
-            }
-
-            // Активируем ПОСЛЕ изменения текста -- иначе порядок рендера/расчёта layout'а может не успеть.
-            if (!endScreenPanel.activeSelf)
-            {
-                endScreenPanel.SetActive(true);
-                Debug.Log($"[MatchEndUI] panel activated: name={endScreenPanel.name}, active={endScreenPanel.activeInHierarchy}");
-            }
         }
 
         void OnRestartPressed()
@@ -154,6 +108,7 @@ namespace CurlingRoyale.Game
                 return;
             }
 
+            // Сбросить все камни на исходные позиции (зафиксированные в StoneCombat.Awake).
             StoneCombat[] all = FindObjectsByType<StoneCombat>(FindObjectsSortMode.None);
             for (int i = 0; i < all.Length; i++)
             {
