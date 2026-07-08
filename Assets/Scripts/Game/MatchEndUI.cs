@@ -105,6 +105,10 @@ namespace CurlingRoyale.Game
                 else
                     winnerText.text = $"Матч окончен ({aliveCount} живых)";
             }
+
+            // Активируем ПОСЛЕ изменения текста -- иначе порядок рендера/расчёта layout'а может не успеть.
+            if (!endScreenPanel.activeSelf)
+                endScreenPanel.SetActive(true);
         }
 
         void OnRestartPressed()
