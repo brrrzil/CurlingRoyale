@@ -165,9 +165,14 @@ namespace CurlingRoyale.Combat
         public void ResetTo(Vector3 position, Quaternion rotation)
         {
             CurrentHP = MaxHP;
+
+            // Сначала зануляем скорости и перемещаем, потом укладываем rigidbody
+            // спать -- чтобы на ближайшем физическом шаге он НЕ проснулся от остаточного
+            // импульса/коллизий и не поехал неизвестно куда.
             rb.linearVelocity = Vector2.zero;
             rb.angularVelocity = 0f;
             transform.SetPositionAndRotation(position, rotation);
+            rb.Sleep();
 
             onHealthChanged?.Invoke(CurrentHP, MaxHP);
         }

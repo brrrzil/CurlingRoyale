@@ -26,6 +26,10 @@ namespace CurlingRoyale.Game
         [Tooltip("Button с подписью 'Restart'.")]
         [SerializeField] private Button restartButton;
 
+        [Header("Поведение")]
+        [Tooltip("Задержка перед показом экрана победы/поражения после MatchEnd.")]
+        [Min(0f)] [SerializeField] private float showDelaySeconds = 1f;
+
         private bool subscribed = false;
 
         void Start()
@@ -65,11 +69,14 @@ namespace CurlingRoyale.Game
 
             if (newState == GameManager.MatchState.MatchEnd)
             {
-                if (!endScreenPanel.activeSelf) endScreenPanel.SetActive(true);
-                ShowEndScreen();
+                // Задержка перед показом экрана -- чтобы игрок увидел момент
+                // гибели/победы без рывка в UI.
+                CancelInvoke(nameof(ShowEndScreen));
+                Invoke(nameof(ShowEndScreen), showDelaySeconds);
             }
             else if (newState == GameManager.MatchState.InProgress)
             {
+                CancelInvoke(nameof(ShowEndScreen));
                 if (endScreenPanel != gameObject && endScreenPanel.activeSelf)
                     endScreenPanel.SetActive(false);
             }

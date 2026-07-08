@@ -178,6 +178,7 @@ namespace CurlingRoyale.Arena
                     rb.angularVelocity = 0f;
                 }
                 playerT.SetPositionAndRotation(pos, Quaternion.identity);
+                if (rb != null) rb.Sleep();
                 Debug.Log($"[MatchStartArranger] player {playerT.name} -> {pos} (arc={arcDegrees:F1}°)");
             }
             else
@@ -202,6 +203,7 @@ namespace CurlingRoyale.Arena
                     rb.angularVelocity = 0f;
                 }
                 botTransforms[i].SetPositionAndRotation(pos, Quaternion.identity);
+                if (rb != null) rb.Sleep();
                 Debug.Log($"[MatchStartArranger] bot[{i}] {botTransforms[i].name} -> {pos} (angle={angleDeg:F1}°)");
             }
         }
