@@ -4,7 +4,7 @@ using UnityEngine;
 namespace CurlingRoyale.Arena
 {
     /// <summary>
-    /// Спавнит N копий BotStone префаба по кругу радиуса spawnRadius
+    /// Спавнит N копий BotDrone префаба по кругу радиуса spawnRadius
     /// с центром в позиции этого объекта.
     /// Полезно для FFA-7 (или любого N ботов без player-а), либо для
     /// смешанного режима (1 player в центре + 7 ботов по кругу).

@@ -148,7 +148,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0e58e929e5b8dd42b92ae69b36b7dee, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CurlingRoyale.Arena.BotSpawner
-  botPrefab: {fileID: 8115788672289187133, guid: c69a8a6d5eae0174095cb0ed000a4efd, type: 3}
+  botPrefab: {fileID: 1000000000000090, guid: c69a8a6d5eae0174095cb0ed000a4efd, type: 3}
   center: {x: 0, y: 0}
   spawnRadius: 3.8
   botCount: 7
