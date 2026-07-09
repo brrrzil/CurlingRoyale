@@ -89,7 +89,7 @@ SpriteRenderer:
   m_Size: {x: 0.9, y: 0.9}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_SpriteSortPoint: 0
 --- !u!1 &851143771682962894
 GameObject:
@@ -1383,7 +1383,7 @@ MonoBehaviour:
   chargeRingRadius: 0.45
   chargeReadyColor: {r: 0.2, g: 1, b: 0.3, a: 0.85}
   chargeFiringColor: {r: 1, g: 0.2, b: 0.2, a: 0.95}
-  aimArrowMaxLength: 5
+  aimArrowMaxLength: 0.5
   chargeAudioSource: {fileID: 0}
   chargeLoopClip: {fileID: 0}
   chargeLoopVolume: 0.4
