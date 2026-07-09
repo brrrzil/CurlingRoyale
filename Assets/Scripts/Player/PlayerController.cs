@@ -290,29 +290,28 @@ namespace CurlingRoyale.Player
         private void UpdateChargeVisual(Vector2 pointerWorld)
         {
             Vector2 pullDir = pointerWorld - (Vector2)transform.position;
+            if (pullDir.sqrMagnitude < 0.0001f) return;
             direction = -pullDir.normalized;
             float chargeTime = Mathf.Min(Time.time - chargeStartTime, maxChargeTime);
             float t = chargeTime / maxChargeTime;
 
             // Arrow: SpriteRenderer с Drone_Arrow.png (стилизованный > chevron).
-            // Sprite квадратный, pivot по центру. Размещается на РАССТОЯНИИ от дрона,
-            // повернут в направлении цели, размер растёт по мере зарядки.
+            // Sprite квадратный, pivot по центру. Размещается на ФИКСИРОВАННОМ расстоянии от дрона
+            // (не следует за курсором), повернут в сторону удара (direction = -pullDir).
             if (aimArrowSprite != null && aimArrowSprite.sprite != null)
             {
-                float dist = pullDir.magnitude;
-                float maxDist = aimArrowMaxLength > 0f ? aimArrowMaxLength : dist;
-                // Стрелка летит на расстояние пропорциональное зарядке.
-                float arrowDist = Mathf.Min(dist, maxDist * t);
-                // Размер растёт по мере зарядки.
-                float scaleX = Mathf.Lerp(0.6f, 1.0f, t);
-                float scaleY = scaleX;
-                // Позиция: drone center + direction * arrowDist.
-                Vector3 pos = transform.position + (Vector3)(pullDir.normalized * arrowDist);
+                // Фиксированная дистанция от дрона до стрелки (немного за ring).
+                float fixedDist = chargeRingRadius + 0.25f;
+                // Если задана aimArrowMaxLength > 0 -- используем её (для дальнобойных стрелок).
+                if (aimArrowMaxLength > 0f) fixedDist = aimArrowMaxLength;
+                // Позиция: drone center + direction * fixedDist.
+                Vector3 pos = transform.position + (Vector3)(direction * fixedDist);
                 aimArrowSprite.transform.position = pos;
-                // Sprite pivot по центру, но `right` указывает направление "правый край = >".
-                // Чтобы наконечник смотрел в direction -- ставим sprite.transform.right = direction.
+                // Chevron смотрит в direction (transform.right = direction → наконечник в направлении удара).
                 aimArrowSprite.transform.right = direction;
-                aimArrowSprite.transform.localScale = new Vector3(scaleX, scaleY, 1f);
+                // Размер растёт по мере зарядки.
+                float scale = Mathf.Lerp(0.6f, 1.0f, t);
+                aimArrowSprite.transform.localScale = new Vector3(scale, scale, 1f);
                 // Цвет: зелёный -> красный по мере зарядки.
                 var sr = aimArrowSprite.GetComponent<SpriteRenderer>();
                 if (sr != null) sr.color = Color.Lerp(chargeReadyColor, chargeFiringColor, t);
