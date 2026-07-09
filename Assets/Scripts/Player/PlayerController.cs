@@ -166,19 +166,25 @@ namespace CurlingRoyale.Player
             float chargeTime = Mathf.Min(Time.time - chargeStartTime, maxChargeTime);
             float t = chargeTime / maxChargeTime;
 
-            // Arrow: SpriteRenderer с Drone_Arrow.png. Sprite pivot = left.
-            // transform.position = drone center. right = направление. scale.x = длина.
+            // Arrow: SpriteRenderer с Drone_Arrow.png (стилизованный > chevron).
+            // Sprite квадратный, pivot по центру. Размещается на РАССТОЯНИИ от дрона,
+            // повернут в направлении цели, размер растёт по мере зарядки.
             if (aimArrowSprite != null && aimArrowSprite.sprite != null)
             {
                 float dist = pullDir.magnitude;
-                float length = aimArrowMaxLength > 0f ? aimArrowMaxLength : dist;
-                float worldWidth = aimArrowSprite.sprite.bounds.size.x;
-                float scaleX = worldWidth > 0.001f ? length / worldWidth : length;
-                if (dist < length)
-                    scaleX = worldWidth > 0.001f ? dist / worldWidth : dist;
-                aimArrowSprite.transform.position = transform.position;
+                float maxDist = aimArrowMaxLength > 0f ? aimArrowMaxLength : dist;
+                // Стрелка летит на расстояние пропорциональное зарядке.
+                float arrowDist = Mathf.Min(dist, maxDist * t);
+                // Размер растёт по мере зарядки.
+                float scaleX = Mathf.Lerp(0.6f, 1.0f, t);
+                float scaleY = scaleX;
+                // Позиция: drone center + direction * arrowDist.
+                Vector3 pos = transform.position + (Vector3)(pullDir.normalized * arrowDist);
+                aimArrowSprite.transform.position = pos;
+                // Sprite pivot по центру, но `right` указывает направление "правый край = >".
+                // Чтобы наконечник смотрел в direction -- ставим sprite.transform.right = direction.
                 aimArrowSprite.transform.right = direction;
-                aimArrowSprite.transform.localScale = new Vector3(scaleX, 1f, 1f);
+                aimArrowSprite.transform.localScale = new Vector3(scaleX, scaleY, 1f);
                 // Цвет: зелёный -> красный по мере зарядки.
                 var sr = aimArrowSprite.GetComponent<SpriteRenderer>();
                 if (sr != null) sr.color = Color.Lerp(chargeReadyColor, chargeFiringColor, t);
