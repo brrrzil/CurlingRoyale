@@ -135,14 +135,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 74570d97add2cd948afd0e2694b7462d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CurlingRoyale.Combat.HealthBar
-  canvasWidthPx: 100
-  canvasHeightPx: 12
+  canvasWidthPx: 70
+  canvasHeightPx: 4.5
   canvasWorldScale: 0.01
-  offset: {x: 0, y: 0.5, z: 0}
-  highColor: {r: 0.3, g: 0.85, b: 0.3, a: 1}
-  midColor: {r: 0.95, g: 0.85, b: 0.3, a: 1}
-  lowColor: {r: 0.95, g: 0.3, b: 0.3, a: 1}
-  backgroundColor: {r: 0.1, g: 0.1, b: 0.1, a: 0.75}
+  offset: {x: 0, y: 0.45, z: 0}
+  highColor: {r: 0.3, g: 0.85, b: 0.3, a: 0.5882353}
+  midColor: {r: 0.95, g: 0.85, b: 0.3, a: 0.5882353}
+  lowColor: {r: 0.95, g: 0.3, b: 0.3, a: 0.5882353}
+  backgroundColor: {r: 0.1, g: 0.1, b: 0.1, a: 0.5882353}
   sortingOrder: 100
 --- !u!1 &7136883242221384845
 GameObject:
@@ -621,6 +621,7 @@ MonoBehaviour:
   aimSpreadDegrees: 18
   randomTargetChance: 0.15
   cooldownDuration: 1.2
+  aimLeadDistance: 1.2
   ringMinColor: {r: 0.3, g: 0.85, b: 0.4, a: 0.85}
   ringMaxColor: {r: 0.95, g: 0.3, b: 0.3, a: 0.85}
   ringStartRadius: 0.5

@@ -585,7 +585,7 @@ Camera:
   far clip plane: 1000
   field of view: 34
   orthographic: 1
-  orthographic size: 3
+  orthographic size: 3.5
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -672,6 +672,7 @@ GameObject:
   m_Component:
   - component: {fileID: 652395698}
   - component: {fileID: 652395699}
+  - component: {fileID: 652395700}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -709,6 +710,71 @@ MonoBehaviour:
   chargePhaseDuration: 1.5
   arenaConfig: {fileID: 11400000, guid: 4043a8961accedc498b9e2aec81b1d95, type: 2}
   arenaBorder: {fileID: 1937041652}
+  playerStone: {fileID: 1705214903}
+--- !u!114 &652395700
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 652395697}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 00c50bb39a1687649b682cf804712ef1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CurlingRoyale.Game.MatchEndUI
+  endScreenPanel: {fileID: 1565630640}
+  winnerText: {fileID: 202541506}
+  restartButton: {fileID: 1506060937}
+  showDelaySeconds: 1
+--- !u!1 &1488976299
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1488976301}
+  - component: {fileID: 1488976300}
+  m_Layer: 0
+  m_Name: MatchStartArranger
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1488976300
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1488976299}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c0a82b96f92173a4e8d1713b425d2a6e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CurlingRoyale.Arena.MatchStartArranger
+  radius: 4.2
+  playerAngleDegrees: 180
+  autoFindStones: 1
+  playerStoneOverride: {fileID: 1705214901}
+--- !u!4 &1488976301
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1488976299}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.98201, y: 0.22275, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1506060934
 GameObject:
   m_ObjectHideFlags: 0
@@ -721,7 +787,6 @@ GameObject:
   - component: {fileID: 1506060939}
   - component: {fileID: 1506060938}
   - component: {fileID: 1506060937}
-  - component: {fileID: 1506060936}
   m_Layer: 5
   m_Name: restartButton
   m_TagString: Untagged
@@ -749,21 +814,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1506060936
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1506060934}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 00c50bb39a1687649b682cf804712ef1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CurlingRoyale.Game.MatchEndUI
-  endScreenPanel: {fileID: 1565630640}
-  winnerText: {fileID: 202541506}
-  restartButton: {fileID: 1506060937}
 --- !u!114 &1506060937
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -988,9 +1038,9 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: -20
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 628b18a9858dc4248a09592e013d46da, type: 3}
+  m_Sprite: {fileID: 463107238167332334, guid: 143b1180b423f93459aed1a0ec2d2eb7, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -1031,11 +1081,71 @@ MonoBehaviour:
   config: {fileID: 11400000, guid: 4043a8961accedc498b9e2aec81b1d95, type: 2}
   target: {fileID: 0}
   baseRadius: 5
+--- !u!1 &1697547904
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1697547906}
+  - component: {fileID: 1697547905}
+  m_Layer: 0
+  m_Name: ArenaBackground
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1697547905
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1697547904}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 765eb43ecb48b3c42a22ac7c0b53b46c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CurlingRoyale.Arena.ArenaBackground
+  backgroundSprite: {fileID: 463107238167332334, guid: 143b1180b423f93459aed1a0ec2d2eb7, type: 3}
+  arenaBorder: {fileID: 1937041652}
+  circleRadiusRatio: 0.155
+  offsetWorld: {x: 0, y: 0}
+  sortingOrder: -19
+--- !u!4 &1697547906
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1697547904}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &1705214901 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4383550488976374149, guid: 04f91fb1a996b404eb838f6f779ebbe5, type: 3}
   m_PrefabInstance: {fileID: 1043750121152314365}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1705214903 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: -4067264744675236013, guid: 04f91fb1a996b404eb838f6f779ebbe5, type: 3}
+  m_PrefabInstance: {fileID: 1043750121152314365}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffc46aefb55ccde46a55f369352c9ed0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CurlingRoyale.Combat.StoneCombat
 --- !u!1 &1735535421
 GameObject:
   m_ObjectHideFlags: 0
@@ -1148,7 +1258,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 783d0bb3233fa5043ac03456ad651a5e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  config: {fileID: 0}
+  config: {fileID: 11400000, guid: 4043a8961accedc498b9e2aec81b1d95, type: 2}
   currentRadius: 5.125
 --- !u!68 &1937041653
 EdgeCollider2D:
@@ -1429,10 +1539,12 @@ SceneRoots:
   m_Roots:
   - {fileID: 519420032}
   - {fileID: 619394802}
-  - {fileID: 1629848965}
-  - {fileID: 1043750121152314365}
   - {fileID: 652395698}
+  - {fileID: 1735535424}
+  - {fileID: 1488976301}
+  - {fileID: 1629848965}
+  - {fileID: 1697547906}
+  - {fileID: 1043750121152314365}
   - {fileID: 182136927}
   - {fileID: 1984228060}
   - {fileID: 421102424}
-  - {fileID: 1735535424}
