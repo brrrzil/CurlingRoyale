@@ -20,7 +20,10 @@ namespace CurlingRoyale.Player
         public float maxChargeTime = 2f;
 
         [Header("Визуал")]
-        public LineRenderer lineRenderer;
+        [Tooltip("SpriteRenderer с спрайтом Drone_Laser (или похожим). Заменяет LineRenderer для прицеливания.")]
+        public SpriteRenderer aimLaserSprite;
+        [Tooltip("Длина лазера в world units. Если 0 -- автоматически по дистанции до pointer.")]
+        public float aimLaserMaxLength = 5f;
         public Transform chargeCircle;
 
         [Header("Звук зарядки")]
@@ -105,7 +108,7 @@ namespace CurlingRoyale.Player
             isCharging = true;
             chargeStartTime = Time.time;
 
-            if (lineRenderer != null) lineRenderer.enabled = true;
+            if (aimLaserSprite != null) aimLaserSprite.gameObject.SetActive(true);
             if (chargeCircle != null) chargeCircle.gameObject.SetActive(true);
 
             if (chargeLoopClip != null && chargeAudioSource != null)
@@ -157,13 +160,32 @@ namespace CurlingRoyale.Player
             direction = -pullDir.normalized;
             float chargeTime = Mathf.Min(Time.time - chargeStartTime, maxChargeTime);
             float t = chargeTime / maxChargeTime;
-            float lineLength = Mathf.Lerp(0.5f, 3f, t);
 
-            if (lineRenderer != null)
+            // Лазер: SpriteRenderer с лазер-спрайтом. Sprite имеет pivot слева
+            // (импортируй с Pivot=Left). Sprite.transform.position = drone center.
+            // right = направление (drone -> pointer). localScale.x = длина / spriteWidth.
+            if (aimLaserSprite != null)
             {
-                lineRenderer.positionCount = 2;
-                lineRenderer.SetPosition(0, transform.position);
-                lineRenderer.SetPosition(1, transform.position + (Vector3)direction * lineLength);
+                float dist = pullDir.magnitude;
+                float length = aimLaserMaxLength > 0f ? aimLaserMaxLength : dist;
+                if (aimLaserSprite.sprite != null)
+                {
+                    // sprite.bounds.size.x = ширина спрайта в world units (при scale=1)
+                    float worldWidth = aimLaserSprite.sprite.bounds.size.x;
+                    float scaleX = worldWidth > 0.001f ? length / worldWidth : length;
+                    aimLaserSprite.transform.position = transform.position;
+                    aimLaserSprite.transform.right = direction;
+                    aimLaserSprite.transform.localScale = new Vector3(scaleX, 1f, 1f);
+                    // Растягиваем длину по дистанции.
+                    if (dist < length)
+                    {
+                        float dynamicScale = worldWidth > 0.001f ? dist / worldWidth : dist;
+                        aimLaserSprite.transform.localScale = new Vector3(dynamicScale, 1f, 1f);
+                    }
+                    // Цвет: зелёный -> красный по мере зарядки.
+                    var sr = aimLaserSprite.GetComponent<SpriteRenderer>();
+                    if (sr != null) sr.color = Color.Lerp(Color.green, Color.red, t);
+                }
             }
             if (chargeCircle != null)
             {
@@ -176,7 +198,7 @@ namespace CurlingRoyale.Player
 
         private void HideChargeVisual()
         {
-            if (lineRenderer != null) lineRenderer.enabled = false;
+            if (aimLaserSprite != null) aimLaserSprite.gameObject.SetActive(false);
             if (chargeCircle != null) chargeCircle.gameObject.SetActive(false);
         }
 

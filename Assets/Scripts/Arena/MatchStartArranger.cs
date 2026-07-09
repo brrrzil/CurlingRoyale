@@ -161,6 +161,10 @@ namespace CurlingRoyale.Arena
 
             Debug.Log($"[MatchStartArranger] Arrange: player={(playerT != null ? playerT.name : "NULL")}, bots={botTransforms.Count}");
 
+            // ВРЕМЕННО переводим все камни в Static чтобы физика их точно не двигала
+            // (Sleep иногда просыпается от deferred collisions). Через 0.4с возвращаем Dynamic.
+            FreezeStonesForSeconds(playerT, botTransforms, 0.4f);
+
             // 3) Общий круг: 1 player + N bots = N+1 участников.
             //    Делим 360° на равные арки между всеми.
             int totalCount = botTransforms.Count + (playerT != null ? 1 : 0);
@@ -205,6 +209,36 @@ namespace CurlingRoyale.Arena
                 botTransforms[i].SetPositionAndRotation(pos, Quaternion.identity);
                 if (rb != null) rb.Sleep();
                 Debug.Log($"[MatchStartArranger] bot[{i}] {botTransforms[i].name} -> {pos} (angle={angleDeg:F1}°)");
+            }
+        }
+
+        // Вспомогательное: перевести все камни в Static на N секунд. Sleep не всегда работает
+        // (есть deferred collisions от FixedUpdate которые просыпают тело). Static = полный freeze.
+        private void FreezeStonesForSeconds(Transform playerT, System.Collections.Generic.List<Transform> botTs, float seconds)
+        {
+            var all = new System.Collections.Generic.List<Transform>();
+            if (playerT != null) all.Add(playerT);
+            all.AddRange(botTs);
+            for (int i = 0; i < all.Count; i++)
+            {
+                var rb = all[i].GetComponent<Rigidbody2D>();
+                if (rb == null) continue;
+                rb.linearVelocity = Vector2.zero;
+                rb.angularVelocity = 0f;
+                rb.bodyType = RigidbodyType2D.Static; // полностью frozen на N секунд
+            }
+            if (seconds > 0f) StartCoroutine(UnfreezeStonesAfter(all, seconds));
+        }
+
+        private System.Collections.IEnumerator UnfreezeStonesAfter(System.Collections.Generic.List<Transform> stones, float seconds)
+        {
+            yield return new WaitForSeconds(seconds);
+            for (int i = 0; i < stones.Count; i++)
+            {
+                if (stones[i] == null) continue;
+                var rb = stones[i].GetComponent<Rigidbody2D>();
+                if (rb == null) continue;
+                rb.bodyType = RigidbodyType2D.Dynamic;
             }
         }
     }

@@ -129,10 +129,17 @@ namespace CurlingRoyale.Combat
         private void OnHealthChanged(int current, int max)
         {
             if (max <= 0) return;
+            // Защита от дробей в current: Clamp + минимальный видимый уровень 0.5%.
             float t = Mathf.Clamp01((float)current / max);
+            if (t > 0f && t < 0.005f) t = 0.005f;
 
+            // localScale.x — пропорциональный размер (0..1) от полной ширины rectTransform.
+            // Pivot должен быть (0, 0.5) (anchor left) -- заполняет от левого края.
+            // Устойчиво к изменению canvasWidthPx / scale канваса.
             if (fillRT != null)
-                fillRT.sizeDelta = new Vector2(canvasWidthPx * t, 0f);
+            {
+                fillRT.localScale = new Vector3(t, 1f, 1f);
+            }
 
             if (fillImage != null)
                 fillImage.color = t > 0.6f ? highColor : (t > 0.3f ? midColor : lowColor);
