@@ -20,11 +20,19 @@ namespace CurlingRoyale.Player
         public float maxChargeTime = 2f;
 
         [Header("Визуал")]
-        [Tooltip("SpriteRenderer с спрайтом Drone_Laser (или похожим). Заменяет LineRenderer для прицеливания.")]
-        public SpriteRenderer aimLaserSprite;
-        [Tooltip("Длина лазера в world units. Если 0 -- автоматически по дистанции до pointer.")]
-        public float aimLaserMaxLength = 5f;
-        public Transform chargeCircle;
+        [Tooltip("SpriteRenderer с Drone_Arrow. Появляется только во время зарядки, направлена к курсору.")]
+        public SpriteRenderer aimArrowSprite;
+        [Tooltip("Image (UnityEngine.UI) с Type=Filled, FillMethod=Radial360, Clockwise=true. " +
+                 "Использует Drone_ChargeWedge.png. Заполняется зелёным (ready) / красным (charging) " +
+                 "по часовой стрелке.")]
+        public UnityEngine.UI.Image chargeRingFill;
+        [Tooltip("SpriteRenderer (опционально) — фон для ring (полное кольцо). Оставь null если не нужно.")]
+        public SpriteRenderer chargeRingBackground;
+        [Range(0.05f, 0.6f)] public float chargeRingRadius = 0.45f; // в world units
+        public Color chargeReadyColor = new Color(0.2f, 1f, 0.3f, 0.85f); // green
+        public Color chargeFiringColor = new Color(1f, 0.2f, 0.2f, 0.95f); // red
+        [Tooltip("Длина стрелки в world units. Если 0 -- автоматически по дистанции до pointer.")]
+        public float aimArrowMaxLength = 5f;
 
         [Header("Звук зарядки")]
         [Tooltip("AudioSource для проигрывания зарядки. Если null -- GetComponent.")]
@@ -108,8 +116,7 @@ namespace CurlingRoyale.Player
             isCharging = true;
             chargeStartTime = Time.time;
 
-            if (aimLaserSprite != null) aimLaserSprite.gameObject.SetActive(true);
-            if (chargeCircle != null) chargeCircle.gameObject.SetActive(true);
+            if (aimArrowSprite != null) aimArrowSprite.gameObject.SetActive(true);
 
             if (chargeLoopClip != null && chargeAudioSource != null)
             {
@@ -149,9 +156,7 @@ namespace CurlingRoyale.Player
             HideChargeVisual();
             if (chargeAudioSource != null && chargeAudioSource.isPlaying) chargeAudioSource.Stop();
             if (reload != null) reload.ForceReady();
-            // Показываем chargeRing если требуется.
-            if (chargeCircle != null && reload != null && reload.IsReady)
-                chargeCircle.gameObject.SetActive(true);
+            UpdateChargeRing();
         }
 
         private void UpdateChargeVisual(Vector2 pointerWorld)
@@ -161,60 +166,72 @@ namespace CurlingRoyale.Player
             float chargeTime = Mathf.Min(Time.time - chargeStartTime, maxChargeTime);
             float t = chargeTime / maxChargeTime;
 
-            // Лазер: SpriteRenderer с лазер-спрайтом. Sprite имеет pivot слева
-            // (импортируй с Pivot=Left). Sprite.transform.position = drone center.
-            // right = направление (drone -> pointer). localScale.x = длина / spriteWidth.
-            if (aimLaserSprite != null)
+            // Arrow: SpriteRenderer с Drone_Arrow.png. Sprite pivot = left.
+            // transform.position = drone center. right = направление. scale.x = длина.
+            if (aimArrowSprite != null && aimArrowSprite.sprite != null)
             {
                 float dist = pullDir.magnitude;
-                float length = aimLaserMaxLength > 0f ? aimLaserMaxLength : dist;
-                if (aimLaserSprite.sprite != null)
-                {
-                    // sprite.bounds.size.x = ширина спрайта в world units (при scale=1)
-                    float worldWidth = aimLaserSprite.sprite.bounds.size.x;
-                    float scaleX = worldWidth > 0.001f ? length / worldWidth : length;
-                    aimLaserSprite.transform.position = transform.position;
-                    aimLaserSprite.transform.right = direction;
-                    aimLaserSprite.transform.localScale = new Vector3(scaleX, 1f, 1f);
-                    // Растягиваем длину по дистанции.
-                    if (dist < length)
-                    {
-                        float dynamicScale = worldWidth > 0.001f ? dist / worldWidth : dist;
-                        aimLaserSprite.transform.localScale = new Vector3(dynamicScale, 1f, 1f);
-                    }
-                    // Цвет: зелёный -> красный по мере зарядки.
-                    var sr = aimLaserSprite.GetComponent<SpriteRenderer>();
-                    if (sr != null) sr.color = Color.Lerp(Color.green, Color.red, t);
-                }
-            }
-            if (chargeCircle != null)
-            {
-                float scale = Mathf.Lerp(0.5f, 1.5f, t);
-                chargeCircle.localScale = Vector3.one * scale;
-                SpriteRenderer sr = chargeCircle.GetComponent<SpriteRenderer>();
-                if (sr != null) sr.color = Color.Lerp(Color.green, Color.red, t);
+                float length = aimArrowMaxLength > 0f ? aimArrowMaxLength : dist;
+                float worldWidth = aimArrowSprite.sprite.bounds.size.x;
+                float scaleX = worldWidth > 0.001f ? length / worldWidth : length;
+                if (dist < length)
+                    scaleX = worldWidth > 0.001f ? dist / worldWidth : dist;
+                aimArrowSprite.transform.position = transform.position;
+                aimArrowSprite.transform.right = direction;
+                aimArrowSprite.transform.localScale = new Vector3(scaleX, 1f, 1f);
+                // Цвет: зелёный -> красный по мере зарядки.
+                var sr = aimArrowSprite.GetComponent<SpriteRenderer>();
+                if (sr != null) sr.color = Color.Lerp(chargeReadyColor, chargeFiringColor, t);
             }
         }
 
         private void HideChargeVisual()
         {
-            if (aimLaserSprite != null) aimLaserSprite.gameObject.SetActive(false);
-            if (chargeCircle != null) chargeCircle.gameObject.SetActive(false);
+            if (aimArrowSprite != null) aimArrowSprite.gameObject.SetActive(false);
         }
 
         private void UpdateChargeRing()
         {
-            // Показать ring когда не заряжаем и камень готов к стрельбе.
-            if (chargeCircle == null || isCharging) return;
-            bool shouldShow = reload.IsReady;
-            if (chargeCircle.gameObject.activeSelf != shouldShow)
-                chargeCircle.gameObject.SetActive(shouldShow);
+            // Управляет видимостью/цветом/fillAmount chargeRingFill (UnityEngine.UI.Image).
+            // 3 состояния:
+            //   -- isCharging:   fillAmount = chargeProgress (0..1), color = firing (red)
+            //   -- !isCharging && reload.IsReady: fillAmount = 1, color = ready (green)
+            //   -- !isCharging && !reload.IsReady (cooldown): hide ring entirely
+            if (chargeRingFill != null)
+            {
+                if (isCharging)
+                {
+                    float t = Mathf.Clamp01((Time.time - chargeStartTime) / maxChargeTime);
+                    chargeRingFill.gameObject.SetActive(true);
+                    chargeRingFill.fillAmount = t;
+                    Color c = chargeFiringColor;
+                    c.a = 1f;
+                    chargeRingFill.color = c;
+                }
+                else if (reload != null && reload.IsReady)
+                {
+                    chargeRingFill.gameObject.SetActive(true);
+                    chargeRingFill.fillAmount = 1f;
+                    Color c = chargeReadyColor;
+                    c.a = 0.85f;
+                    chargeRingFill.color = c;
+                }
+                else
+                {
+                    chargeRingFill.gameObject.SetActive(false);
+                }
+            }
+            if (chargeRingBackground != null)
+            {
+                bool show = isCharging || (reload != null && reload.IsReady);
+                if (chargeRingBackground.gameObject.activeSelf != show)
+                    chargeRingBackground.gameObject.SetActive(show);
+            }
         }
 
         private void ShowChargeVisualIfReady()
         {
-            if (chargeCircle != null && reload.IsReady)
-                chargeCircle.gameObject.SetActive(true);
+            UpdateChargeRing();
         }
 
         // ─── Input ─────────────────────────────────────────────────
