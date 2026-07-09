@@ -49,6 +49,12 @@ namespace CurlingRoyale.Player
         private bool isCharging;
         private Camera mainCam;
         private bool wasDeadLastUpdate;
+        private bool visualsAutoCreated;
+
+        // Кэшированные runtime-спрайты (загружаются из Resources, если есть).
+        private static Sprite cachedArrowSprite;
+        private static Sprite cachedRingFillSprite;
+        private static Sprite cachedRingBgSprite;
 
         // ─── Init ──────────────────────────────────────────────────
 
@@ -59,7 +65,129 @@ namespace CurlingRoyale.Player
             combat = GetComponent<CurlingRoyale.Combat.StoneCombat>();
             mainCam = Camera.main;
             if (chargeAudioSource == null) chargeAudioSource = GetComponent<AudioSource>();
+            EnsureVisuals();
             HideChargeVisual();
+        }
+
+        /// <summary>
+        /// Auto-find или auto-create визуалов: стрелка прицеливания + ring зарядки.
+        /// Правило проекта: юзер делает wiring вручную, но мы страхуемся fallback'ом.
+        /// Поиск по имени (transform.Find("AimArrow"), и т.д.) — не трогает чужие GO.
+        /// </summary>
+        private void EnsureVisuals()
+        {
+            // 1. Стрелка прицеливания.
+            if (aimArrowSprite == null)
+            {
+                var t = transform.Find("AimArrow");
+                if (t != null) aimArrowSprite = t.GetComponent<SpriteRenderer>();
+            }
+            if (aimArrowSprite == null)
+            {
+                var go = new GameObject("AimArrow", typeof(SpriteRenderer));
+                go.transform.SetParent(transform, false);
+                go.transform.localPosition = Vector3.zero;
+                go.transform.localScale = Vector3.one;
+                var sr = go.GetComponent<SpriteRenderer>();
+                sr.sprite = LoadSprite("Drone/Drone_Arrow", ref cachedArrowSprite);
+                sr.sortingOrder = 30;
+                sr.color = Color.white;
+                aimArrowSprite = sr;
+                go.SetActive(false);
+                visualsAutoCreated = true;
+            }
+
+            // 2. Ring: Canvas > Fill (UI Image) + Background (SpriteRenderer).
+            if (chargeRingFill == null || chargeRingBackground == null)
+            {
+                var canvasT = transform.Find("ChargeRingCanvas");
+                if (canvasT != null)
+                {
+                    if (chargeRingFill == null)
+                    {
+                        var fillT = canvasT.Find("ChargeRingFill");
+                        if (fillT != null) chargeRingFill = fillT.GetComponent<UnityEngine.UI.Image>();
+                    }
+                    if (chargeRingBackground == null)
+                    {
+                        var bgT = canvasT.Find("ChargeRingBackground");
+                        if (bgT != null) chargeRingBackground = bgT.GetComponent<SpriteRenderer>();
+                    }
+                }
+
+                if (chargeRingFill == null || chargeRingBackground == null)
+                {
+                    // Создаём Canvas + RectTransform.
+                    var canvasGo = new GameObject("ChargeRingCanvas",
+                        typeof(RectTransform), typeof(Canvas));
+                    canvasGo.transform.SetParent(transform, false);
+                    canvasGo.transform.localPosition = Vector3.zero;
+                    // Canvas в world space, scale подбираем так, чтобы 1 unit Canvas == ~100px.
+                    // Для ring диаметром ~0.9 world units, RectTransform size = 90 px.
+                    canvasGo.transform.localScale = Vector3.one * 0.01f;
+                    var canvas = canvasGo.GetComponent<Canvas>();
+                    canvas.renderMode = RenderMode.WorldSpace;
+                    canvas.sortingOrder = 50;
+                    var canvasRt = canvasGo.GetComponent<RectTransform>();
+                    canvasRt.sizeDelta = new Vector2(chargeRingRadius * 200f, chargeRingRadius * 200f);
+
+                    // Background: тусклое серое кольцо (SpriteRenderer под fill).
+                    if (chargeRingBackground == null)
+                    {
+                        var bgGo = new GameObject("ChargeRingBackground", typeof(SpriteRenderer));
+                        bgGo.transform.SetParent(canvasGo.transform, false);
+                        bgGo.transform.localPosition = Vector3.zero;
+                        bgGo.transform.localScale = Vector3.one * (chargeRingRadius * 100f);
+                        var bgSr = bgGo.GetComponent<SpriteRenderer>();
+                        bgSr.sprite = LoadSprite("Drone/Drone_ChargeRing_BG", ref cachedRingBgSprite);
+                        bgSr.color = new Color(1f, 1f, 1f, 0.25f);
+                        bgSr.sortingOrder = 51;
+                        chargeRingBackground = bgSr;
+                    }
+
+                    // Fill: UI Image с radial 360.
+                    if (chargeRingFill == null)
+                    {
+                        var fillGo = new GameObject("ChargeRingFill",
+                            typeof(RectTransform), typeof(UnityEngine.UI.Image));
+                        fillGo.transform.SetParent(canvasGo.transform, false);
+                        var fillRt = fillGo.GetComponent<RectTransform>();
+                        fillRt.anchorMin = Vector2.zero;
+                        fillRt.anchorMax = Vector2.one;
+                        fillRt.offsetMin = Vector2.zero;
+                        fillRt.offsetMax = Vector2.zero;
+                        var img = fillGo.GetComponent<UnityEngine.UI.Image>();
+                        img.sprite = LoadSprite("Drone/Drone_ChargeWedge", ref cachedRingFillSprite);
+                        img.type = UnityEngine.UI.Image.Type.Filled;
+                        img.fillMethod = UnityEngine.UI.Image.FillMethod.Radial360;
+                        img.fillOrigin = (int)UnityEngine.UI.Image.Origin360.Top;
+                        img.fillClockwise = true;
+                        img.fillAmount = 1f;
+                        img.color = chargeReadyColor;
+                        img.raycastTarget = false;
+                        chargeRingFill = img;
+                    }
+
+                    visualsAutoCreated = true;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Загрузить спрайт из Resources. Если не нашли — fallback на 1x1 white (будет виден как квадрат).
+        /// </summary>
+        private static Sprite LoadSprite(string resourcePath, ref Sprite cache)
+        {
+            if (cache != null) return cache;
+            cache = Resources.Load<Sprite>(resourcePath);
+            if (cache != null) return cache;
+            // Fallback: 1x1 white square.
+            var tex = Texture2D.whiteTexture;
+            cache = Sprite.Create(tex, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 100f);
+            cache.name = resourcePath + "_AutoFallback";
+            Debug.LogWarning($"[PlayerController] Sprite '{resourcePath}' не найден в Resources/ -- используется белый квадрат. " +
+                             $"Скопируй Drone_Arrow.png и Drone_ChargeWedge.png в Assets/Resources/{resourcePath.Replace("Drone/", "Drone/")}.");
+            return cache;
         }
 
         void Start()
