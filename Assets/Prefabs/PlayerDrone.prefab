@@ -1378,8 +1378,8 @@ MonoBehaviour:
   maxForce: 30
   maxChargeTime: 2
   aimArrowSprite: {fileID: 7230747571839786888}
-  chargeRingFill: {fileID: 0}
-  chargeRingBackground: {fileID: 0}
+  chargeRingFill: {fileID: 1301765889779445726}
+  chargeRingBackground: {fileID: 1886238939017438018}
   chargeRingRadius: 0.45
   chargeReadyColor: {r: 0.2, g: 1, b: 0.3, a: 0.85}
   chargeFiringColor: {r: 1, g: 0.2, b: 0.2, a: 0.95}
