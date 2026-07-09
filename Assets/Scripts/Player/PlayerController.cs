@@ -50,6 +50,9 @@ namespace CurlingRoyale.Player
         private Camera mainCam;
         private bool wasDeadLastUpdate;
         private bool visualsAutoCreated;
+        // Базовый localScale стрелки (из префаба). Используем как основу,
+        // к которой применяем charge multiplier в UpdateChargeVisual.
+        private Vector3 aimArrowBaseScale = Vector3.one;
 
         // Кэшированные runtime-спрайты (загружаются из Resources, если есть).
         private static Sprite cachedArrowSprite;
@@ -66,6 +69,8 @@ namespace CurlingRoyale.Player
             mainCam = Camera.main;
             if (chargeAudioSource == null) chargeAudioSource = GetComponent<AudioSource>();
             EnsureVisuals();
+            // Запоминаем базовый размер стрелки, чтобы не перетирать то, что юзер поставил в префабе.
+            if (aimArrowSprite != null) aimArrowBaseScale = aimArrowSprite.transform.localScale;
             HideChargeVisual();
         }
 
@@ -157,7 +162,7 @@ namespace CurlingRoyale.Player
                         fillRt.offsetMin = Vector2.zero;
                         fillRt.offsetMax = Vector2.zero;
                         var img = fillGo.GetComponent<UnityEngine.UI.Image>();
-                        img.sprite = LoadSprite("Drone/Drone_ChargeWedge", ref cachedRingFillSprite);
+                        img.sprite = LoadSprite("Drone/Drone_ChargeFill", ref cachedRingFillSprite);
                         img.type = UnityEngine.UI.Image.Type.Filled;
                         img.fillMethod = UnityEngine.UI.Image.FillMethod.Radial360;
                         img.fillOrigin = (int)UnityEngine.UI.Image.Origin360.Top;
@@ -309,9 +314,9 @@ namespace CurlingRoyale.Player
                 aimArrowSprite.transform.position = pos;
                 // Chevron смотрит в direction (transform.right = direction → наконечник в направлении удара).
                 aimArrowSprite.transform.right = direction;
-                // Размер растёт по мере зарядки.
-                float scale = Mathf.Lerp(0.6f, 1.0f, t);
-                aimArrowSprite.transform.localScale = new Vector3(scale, scale, 1f);
+                // Размер: уважаем localScale из префаба, применяем мультипликатор 1.0→1.3 по зарядке.
+                float chargeMul = Mathf.Lerp(1f, 1.3f, t);
+                aimArrowSprite.transform.localScale = aimArrowBaseScale * chargeMul;
                 // Цвет: зелёный -> красный по мере зарядки.
                 var sr = aimArrowSprite.GetComponent<SpriteRenderer>();
                 if (sr != null) sr.color = Color.Lerp(chargeReadyColor, chargeFiringColor, t);
