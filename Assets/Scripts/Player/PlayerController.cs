@@ -317,9 +317,15 @@ namespace CurlingRoyale.Player
                 // Размер: уважаем localScale из префаба, применяем мультипликатор 1.0→1.3 по зарядке.
                 float chargeMul = Mathf.Lerp(1f, 1.3f, t);
                 aimArrowSprite.transform.localScale = aimArrowBaseScale * chargeMul;
-                // Цвет: зелёный -> красный по мере зарядки.
+                // Цвет: не тинтируем (спрайт уже cyan) — только меняем alpha по зарядке (1.0→0.7),
+                // чтобы было видно прогресс без потери яркости.
                 var sr = aimArrowSprite.GetComponent<SpriteRenderer>();
-                if (sr != null) sr.color = Color.Lerp(chargeReadyColor, chargeFiringColor, t);
+                if (sr != null)
+                {
+                    Color baseCol = sr.color;
+                    baseCol.a = Mathf.Lerp(1f, 0.7f, t);
+                    sr.color = baseCol;
+                }
             }
         }
 
