@@ -136,6 +136,14 @@ namespace CurlingRoyale.Player
             if (mainCam == null) return;
 
             Vector2? pointerWorld = GetPointerWorldPosition();
+
+            // ─── DEBUG: детальная диагностика charge ring (временный код) ──────────
+            if (Time.frameCount % 30 == 0) // раз в ~0.5 сек
+            {
+                Debug.Log($"[PlayerDiag] isCharging={isCharging} reload.IsReady={reload?.IsReady} pointer={pointerWorld?.ToString() ?? "NULL"} ringFill={(chargeRingFill != null ? "OK" : "NULL")} dist={(pointerWorld.HasValue ? Vector2.Distance(pointerWorld.Value, transform.position).ToString("F2") : "-")}");
+            }
+            // ────────────────────────────────────────────────────────────────────────
+
             if (!pointerWorld.HasValue) { UpdateChargeRing(); return; }
 
             // Старт зарядки — только если ready.
@@ -143,7 +151,12 @@ namespace CurlingRoyale.Player
             {
                 if (Vector2.Distance(pointerWorld.Value, transform.position) < 1f)
                 {
+                    Debug.Log("[PlayerDiag] StartCharge() — клик в радиусе 1 ед.");
                     StartCharge();
+                }
+                else
+                {
+                    Debug.Log($"[PlayerDiag] Клик СЛИШКОМ ДАЛЕКО ({Vector2.Distance(pointerWorld.Value, transform.position):F2} > 1)");
                 }
             }
 
