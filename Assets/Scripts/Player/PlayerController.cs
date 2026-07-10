@@ -254,11 +254,12 @@ namespace CurlingRoyale.Player
 
         private void UpdateChargeRing()
         {
-            // Управляет видимостью/цветом/fillAmount кольца зарядки (chargeRingFill UI Image).
-            // Радиальная заливка Type=Filled, FillMethod=Radial360, Clockwise=true.
-            //   -- isCharging:           fillAmount = t (0..1), color = red (firing)
-            //   -- !isCharging && ready: fillAmount = 1, color = green (ready)
-            //   -- !isCharging && cooldown: hide ring entirely
+            // Кольцо зарядки (chargeRingFill UI Image, Radial360 Clockwise=true).
+            //   -- Ready:      full (1.0), зелёный -- игрок может ударить
+            //   -- Charging:   опустошается по часовой 1→0, цвет green→red
+            //   -- Cooldown:   скрыто
+            // При t=0 зарядки fillAmount=1 (кольцо ВИДНО), не 0. Иначе оно
+            // «исчезает» в первом кадре, что сбивает с толку.
             if (chargeRingFill == null) return;
 
             if (isCharging)
@@ -266,7 +267,7 @@ namespace CurlingRoyale.Player
                 float t = Mathf.Clamp01((Time.time - chargeStartTime) / maxChargeTime);
                 if (!chargeRingFill.gameObject.activeSelf)
                     chargeRingFill.gameObject.SetActive(true);
-                chargeRingFill.fillAmount = t;
+                chargeRingFill.fillAmount = 1f - t;
                 Color c = chargeFiringColor;
                 c.a = 1f;
                 chargeRingFill.color = c;
