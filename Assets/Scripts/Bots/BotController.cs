@@ -59,8 +59,8 @@ namespace CurlingRoyale.Bots
         // Ring: ищем в префабе, иначе ничего (без runtime-создания).
         [Tooltip("SpriteRenderer кольца зарядки (ChargeCircle в префабе). " +
                  "Цвет: green=ready, red=charging. Размер растёт по мере зарядки.")]
-        [SerializeField] private SpriteRenderer chargeRingRenderer;
-        private Vector3 chargeRingBaseScale = Vector3.one;
+        [SerializeField] private SpriteRenderer chargeCircleRenderer;
+        private Vector3 chargeCircleBaseScale = Vector3.one;
         private bool hasChargeRing;
 
         void Awake()
@@ -68,15 +68,15 @@ namespace CurlingRoyale.Bots
             physicsBody = GetComponent<CustomPhysicsBody>();
             reload = GetComponent<ReloadController>();
             combat = GetComponent<CurlingRoyale.Combat.StoneCombat>();
-            if (chargeRingRenderer == null)
+            if (chargeCircleRenderer == null)
             {
                 var t = transform.Find("ChargeCircle");
-                if (t != null) chargeRingRenderer = t.GetComponent<SpriteRenderer>();
+                if (t != null) chargeCircleRenderer = t.GetComponent<SpriteRenderer>();
             }
-            if (chargeRingRenderer != null)
+            if (chargeCircleRenderer != null)
             {
                 hasChargeRing = true;
-                chargeRingBaseScale = chargeRingRenderer.transform.localScale;
+                chargeCircleBaseScale = chargeCircleRenderer.transform.localScale;
             }
         }
 
@@ -265,19 +265,19 @@ namespace CurlingRoyale.Bots
 
         private void SetRingActive(bool active)
         {
-            if (chargeRingRenderer != null && chargeRingRenderer.gameObject.activeSelf != active)
-                chargeRingRenderer.gameObject.SetActive(active);
+            if (chargeCircleRenderer != null && chargeCircleRenderer.gameObject.activeSelf != active)
+                chargeCircleRenderer.gameObject.SetActive(active);
         }
 
         private void UpdateRingVisual()
         {
-            if (chargeRingRenderer == null) return;
+            if (chargeCircleRenderer == null) return;
             float t = Mathf.Clamp01((Time.time - chargeStartTime) / Mathf.Max(0.01f, chargeDuration));
             // Color: green (ready) → red (charging) by t.
-            chargeRingRenderer.color = Color.Lerp(ringMinColor, ringMaxColor, t);
+            chargeCircleRenderer.color = Color.Lerp(ringMinColor, ringMaxColor, t);
             // Scale: ringStartScaleMul → ringEndScaleMul.
             float scaleMul = Mathf.Lerp(ringStartScaleMul, ringEndScaleMul, t);
-            chargeRingRenderer.transform.localScale = chargeRingBaseScale * scaleMul;
+            chargeCircleRenderer.transform.localScale = chargeCircleBaseScale * scaleMul;
         }
     }
 }

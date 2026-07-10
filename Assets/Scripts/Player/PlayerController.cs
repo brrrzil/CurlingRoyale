@@ -22,9 +22,9 @@ namespace CurlingRoyale.Player
         [Header("Визуал")]
         [Tooltip("SpriteRenderer с Drone_Arrow. Появляется только во время зарядки, направлена к курсору.")]
         public SpriteRenderer aimArrowSprite;
-        [Tooltip("SpriteRenderer кольца зарядки (ring). Цвет: green=ready, red=charging. " +
-                 "Размер растёт по мере зарядки.")]
-        [SerializeField] private SpriteRenderer chargeRingRenderer;
+        [Tooltip("SpriteRenderer кольца зарядки (ChargeCircle в префабе). " +
+                 "Цвет: green=ready, red=charging. Размер растёт по мере зарядки.")]
+        [SerializeField] private SpriteRenderer chargeCircleRenderer;
         [Range(0.05f, 0.6f)] public float chargeRingRadius = 0.45f; // в world units
         public Color chargeReadyColor = new Color(0.2f, 1f, 0.3f, 0.85f); // green
         public Color chargeFiringColor = new Color(1f, 0.2f, 0.2f, 0.95f); // red
@@ -51,7 +51,7 @@ namespace CurlingRoyale.Player
         // к которой применяем charge multiplier в UpdateChargeVisual.
         private Vector3 aimArrowBaseScale = Vector3.one;
         // Базовый localScale кольца зарядки (из префаба). Применяем charge multiplier в UpdateChargeRing.
-        private Vector3 chargeRingBaseScale = Vector3.one;
+        private Vector3 chargeCircleBaseScale = Vector3.one;
 
         // Кэшированные runtime-спрайты (загружаются из Resources, если есть).
         private static Sprite cachedArrowSprite;
@@ -73,7 +73,7 @@ namespace CurlingRoyale.Player
 
         /// <summary>
         /// Auto-find или auto-create стрелки прицеливания.
-        /// Ring зарядки используется ТОЛЬКО через prefab-сериализованный chargeRingRenderer
+        /// Ring зарядки используется ТОЛЬКО через prefab-сериализованный chargeCircleRenderer
         /// (никакого авто-создания ring — правило проекта: не плодим runtime объекты).
         /// </summary>
         private void EnsureVisuals()
@@ -100,14 +100,14 @@ namespace CurlingRoyale.Player
             }
 
             // 2. Ring: находим по имени "ChargeCircle" в префабе, если не привязан в Inspector.
-            if (chargeRingRenderer == null)
+            if (chargeCircleRenderer == null)
             {
                 var t = transform.Find("ChargeCircle");
-                if (t != null) chargeRingRenderer = t.GetComponent<SpriteRenderer>();
+                if (t != null) chargeCircleRenderer = t.GetComponent<SpriteRenderer>();
             }
-            if (chargeRingRenderer != null)
+            if (chargeCircleRenderer != null)
             {
-                chargeRingBaseScale = chargeRingRenderer.transform.localScale;
+                chargeCircleBaseScale = chargeCircleRenderer.transform.localScale;
             }
         }
 
@@ -274,30 +274,30 @@ namespace CurlingRoyale.Player
             //   -- isCharging:           color = red (firing), scale *= (1 + t * 0.5)
             //   -- !isCharging && ready: color = green (ready), scale = base
             //   -- !isCharging && cooldown: hide ring entirely
-            if (chargeRingRenderer == null) return;
+            if (chargeCircleRenderer == null) return;
 
             if (isCharging)
             {
                 float t = Mathf.Clamp01((Time.time - chargeStartTime) / maxChargeTime);
-                if (!chargeRingRenderer.gameObject.activeSelf)
-                    chargeRingRenderer.gameObject.SetActive(true);
+                if (!chargeCircleRenderer.gameObject.activeSelf)
+                    chargeCircleRenderer.gameObject.SetActive(true);
                 Color c = chargeFiringColor;
                 c.a = 1f;
-                chargeRingRenderer.color = c;
+                chargeCircleRenderer.color = c;
                 float chargeMul = 1f + t * 0.5f; // 1.0 → 1.5
-                chargeRingRenderer.transform.localScale = chargeRingBaseScale * chargeMul;
+                chargeCircleRenderer.transform.localScale = chargeCircleBaseScale * chargeMul;
             }
             else if (reload != null && reload.IsReady)
             {
-                if (!chargeRingRenderer.gameObject.activeSelf)
-                    chargeRingRenderer.gameObject.SetActive(true);
-                chargeRingRenderer.color = chargeReadyColor;
-                chargeRingRenderer.transform.localScale = chargeRingBaseScale;
+                if (!chargeCircleRenderer.gameObject.activeSelf)
+                    chargeCircleRenderer.gameObject.SetActive(true);
+                chargeCircleRenderer.color = chargeReadyColor;
+                chargeCircleRenderer.transform.localScale = chargeCircleBaseScale;
             }
             else
             {
-                if (chargeRingRenderer.gameObject.activeSelf)
-                    chargeRingRenderer.gameObject.SetActive(false);
+                if (chargeCircleRenderer.gameObject.activeSelf)
+                    chargeCircleRenderer.gameObject.SetActive(false);
             }
         }
 

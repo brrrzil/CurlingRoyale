@@ -73,6 +73,23 @@ namespace CurlingRoyale.Combat
             if (targetTransform == null) return;
             transform.position = targetTransform.position + offset;
             transform.rotation = Quaternion.identity;
+
+            // Safety net: всегда подтягиваем бар к актуальному HP target'а.
+            // Если onHealthChanged event не дошёл (race condition, listener отписан и т.п.),
+            // бар всё равно останется правильным.
+            if (target != null && fillRT != null)
+            {
+                int cur = target.CurrentHP;
+                int max = target.MaxHP;
+                if (max > 0)
+                {
+                    float t = Mathf.Clamp01((float)cur / max);
+                    if (t > 0f && t < 0.005f) t = 0.005f;
+                    // Обновляем только если изменилось (чтобы не насиловать RectTransform каждый кадр).
+                    if (!Mathf.Approximately(fillRT.localScale.x, t))
+                        fillRT.localScale = new Vector3(t, 1f, 1f);
+                }
+            }
         }
 
         // ─── Создание Canvas + Image ─────────────────────────
