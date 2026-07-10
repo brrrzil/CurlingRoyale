@@ -743,9 +743,9 @@ MonoBehaviour:
   aimLeadDistance: 1.2
   ringMinColor: {r: 0.3, g: 0.85, b: 0.4, a: 0.85}
   ringMaxColor: {r: 0.95, g: 0.3, b: 0.3, a: 0.85}
-  ringStartRadius: 0
-  ringEndRadius: 0
-  ringSortingOrder: -100
+  ringStartScaleMul: 1
+  ringEndScaleMul: 1.3
+  chargeRingRenderer: {fileID: 1000000000000061}
   chargeAudioSource: {fileID: 0}
   chargeLoopClip: {fileID: 0}
   chargeLoopVolume: 0.25

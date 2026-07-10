@@ -34,9 +34,10 @@ namespace CurlingRoyale.Bots
         [Header("Цвета charge ring (авто-создаваемого)")]
         public Color ringMinColor = new Color(0.3f, 0.85f, 0.4f, 0.85f);
         public Color ringMaxColor = new Color(0.95f, 0.3f, 0.3f, 0.85f);
-        public float ringStartRadius = 0.5f;
-        public float ringEndRadius = 1.5f;
-        public int ringSortingOrder = 10;
+        [Tooltip("Множитель размера кольца в начале зарядки (1.0 = базовый размер из префаба).")]
+        [Range(0.5f, 1.5f)] public float ringStartScaleMul = 1f;
+        [Tooltip("Множитель размера кольца в конце зарядки (при maxForce).")]
+        [Range(0.5f, 2.5f)] public float ringEndScaleMul = 1.3f;
 
         [Header("Звук зарядки")]
         [SerializeField] private AudioSource chargeAudioSource;
@@ -55,16 +56,28 @@ namespace CurlingRoyale.Bots
         private float aimTimer;
         private float cooldownTimer;
 
-        // авто-создаваемый ring
-        private SpriteRenderer chargeRingRenderer;
-        private Color baseRingColor;
+        // Ring: ищем в префабе, иначе ничего (без runtime-создания).
+        [Tooltip("SpriteRenderer кольца зарядки (ChargeCircle в префабе). " +
+                 "Цвет: green=ready, red=charging. Размер растёт по мере зарядки.")]
+        [SerializeField] private SpriteRenderer chargeRingRenderer;
+        private Vector3 chargeRingBaseScale = Vector3.one;
+        private bool hasChargeRing;
 
         void Awake()
         {
             physicsBody = GetComponent<CustomPhysicsBody>();
             reload = GetComponent<ReloadController>();
             combat = GetComponent<CurlingRoyale.Combat.StoneCombat>();
-            EnsureChargeRing();
+            if (chargeRingRenderer == null)
+            {
+                var t = transform.Find("ChargeCircle");
+                if (t != null) chargeRingRenderer = t.GetComponent<SpriteRenderer>();
+            }
+            if (chargeRingRenderer != null)
+            {
+                hasChargeRing = true;
+                chargeRingBaseScale = chargeRingRenderer.transform.localScale;
+            }
         }
 
         void OnEnable()
@@ -72,8 +85,7 @@ namespace CurlingRoyale.Bots
             // Если GameManager уже есть, подпишемся.
             if (GameManager.Instance != null)
                 GameManager.Instance.onStateChanged += OnGameStateChanged;
-            EnsureChargeRing();
-            SetRingActive(false);
+            if (hasChargeRing) SetRingActive(false);
         }
 
         void OnDisable()
@@ -249,32 +261,7 @@ namespace CurlingRoyale.Bots
                 chargeAudioSource.Stop();
         }
 
-        // ─── Ring (программное создание) ──────────────────────────
-
-        private void EnsureChargeRing()
-        {
-            if (chargeRingRenderer != null) return;
-            var go = new GameObject("BotChargeRing");
-            go.transform.SetParent(transform, false);
-            go.transform.localPosition = Vector3.zero;
-            // Sprite 1x1 при PPU=100 → 0.01 world units. Умножаем желаемый радиус на 100.
-            go.transform.localScale = Vector3.one * (ringStartRadius * 100f);
-            chargeRingRenderer = go.AddComponent<SpriteRenderer>();
-            chargeRingRenderer.sprite = GetOrCreateRingSprite();
-            chargeRingRenderer.sortingOrder = ringSortingOrder;
-            chargeRingRenderer.color = ringMinColor;
-        }
-
-        private static Sprite cachedRingSprite;
-
-        private static Sprite GetOrCreateRingSprite()
-        {
-            if (cachedRingSprite != null) return cachedRingSprite;
-            var tex = Texture2D.whiteTexture;
-            cachedRingSprite = Sprite.Create(tex, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 100f);
-            cachedRingSprite.name = "BotRingSprite";
-            return cachedRingSprite;
-        }
+        // ─── Ring ───────────────────────────────────────────────────
 
         private void SetRingActive(bool active)
         {
@@ -286,11 +273,11 @@ namespace CurlingRoyale.Bots
         {
             if (chargeRingRenderer == null) return;
             float t = Mathf.Clamp01((Time.time - chargeStartTime) / Mathf.Max(0.01f, chargeDuration));
-            float radius = Mathf.Lerp(ringStartRadius, ringEndRadius, t);
-            // 1×1 sprite при PPU=100, мир 0.01; умножаем радиус на 100.
-            float scale = radius * 100f;
-            chargeRingRenderer.transform.localScale = new Vector3(scale, scale, 1f);
+            // Color: green (ready) → red (charging) by t.
             chargeRingRenderer.color = Color.Lerp(ringMinColor, ringMaxColor, t);
+            // Scale: ringStartScaleMul → ringEndScaleMul.
+            float scaleMul = Mathf.Lerp(ringStartScaleMul, ringEndScaleMul, t);
+            chargeRingRenderer.transform.localScale = chargeRingBaseScale * scaleMul;
         }
     }
 }

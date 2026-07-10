@@ -22,12 +22,9 @@ namespace CurlingRoyale.Player
         [Header("Визуал")]
         [Tooltip("SpriteRenderer с Drone_Arrow. Появляется только во время зарядки, направлена к курсору.")]
         public SpriteRenderer aimArrowSprite;
-        [Tooltip("Image (UnityEngine.UI) с Type=Filled, FillMethod=Radial360, Clockwise=true. " +
-                 "Использует Drone_ChargeWedge.png. Заполняется зелёным (ready) / красным (charging) " +
-                 "по часовой стрелке.")]
-        public UnityEngine.UI.Image chargeRingFill;
-        [Tooltip("SpriteRenderer (опционально) — фон для ring (полное кольцо). Оставь null если не нужно.")]
-        public SpriteRenderer chargeRingBackground;
+        [Tooltip("SpriteRenderer кольца зарядки (ring). Цвет: green=ready, red=charging. " +
+                 "Размер растёт по мере зарядки.")]
+        [SerializeField] private SpriteRenderer chargeRingRenderer;
         [Range(0.05f, 0.6f)] public float chargeRingRadius = 0.45f; // в world units
         public Color chargeReadyColor = new Color(0.2f, 1f, 0.3f, 0.85f); // green
         public Color chargeFiringColor = new Color(1f, 0.2f, 0.2f, 0.95f); // red
@@ -53,11 +50,11 @@ namespace CurlingRoyale.Player
         // Базовый localScale стрелки (из префаба). Используем как основу,
         // к которой применяем charge multiplier в UpdateChargeVisual.
         private Vector3 aimArrowBaseScale = Vector3.one;
+        // Базовый localScale кольца зарядки (из префаба). Применяем charge multiplier в UpdateChargeRing.
+        private Vector3 chargeRingBaseScale = Vector3.one;
 
         // Кэшированные runtime-спрайты (загружаются из Resources, если есть).
         private static Sprite cachedArrowSprite;
-        private static Sprite cachedRingFillSprite;
-        private static Sprite cachedRingBgSprite;
 
         // ─── Init ──────────────────────────────────────────────────
 
@@ -75,13 +72,13 @@ namespace CurlingRoyale.Player
         }
 
         /// <summary>
-        /// Auto-find или auto-create визуалов: стрелка прицеливания + ring зарядки.
-        /// Правило проекта: юзер делает wiring вручную, но мы страхуемся fallback'ом.
-        /// Поиск по имени (transform.Find("AimArrow"), и т.д.) — не трогает чужие GO.
+        /// Auto-find или auto-create стрелки прицеливания.
+        /// Ring зарядки используется ТОЛЬКО через prefab-сериализованный chargeRingRenderer
+        /// (никакого авто-создания ring — правило проекта: не плодим runtime объекты).
         /// </summary>
         private void EnsureVisuals()
         {
-            // 1. Стрелка прицеливания.
+            // 1. Стрелка прицеливания (auto-create fallback, если не привязана в префабе).
             if (aimArrowSprite == null)
             {
                 var t = transform.Find("AimArrow");
@@ -102,79 +99,15 @@ namespace CurlingRoyale.Player
                 visualsAutoCreated = true;
             }
 
-            // 2. Ring: Canvas > Fill (UI Image) + Background (SpriteRenderer).
-            if (chargeRingFill == null || chargeRingBackground == null)
+            // 2. Ring: находим по имени "ChargeCircle" в префабе, если не привязан в Inspector.
+            if (chargeRingRenderer == null)
             {
-                var canvasT = transform.Find("ChargeRingCanvas");
-                if (canvasT != null)
-                {
-                    if (chargeRingFill == null)
-                    {
-                        var fillT = canvasT.Find("ChargeRingFill");
-                        if (fillT != null) chargeRingFill = fillT.GetComponent<UnityEngine.UI.Image>();
-                    }
-                    if (chargeRingBackground == null)
-                    {
-                        var bgT = canvasT.Find("ChargeRingBackground");
-                        if (bgT != null) chargeRingBackground = bgT.GetComponent<SpriteRenderer>();
-                    }
-                }
-
-                if (chargeRingFill == null || chargeRingBackground == null)
-                {
-                    // Создаём Canvas + RectTransform.
-                    var canvasGo = new GameObject("ChargeRingCanvas",
-                        typeof(RectTransform), typeof(Canvas));
-                    canvasGo.transform.SetParent(transform, false);
-                    canvasGo.transform.localPosition = Vector3.zero;
-                    // Canvas в world space, scale подбираем так, чтобы 1 unit Canvas == ~100px.
-                    // Для ring диаметром ~0.9 world units, RectTransform size = 90 px.
-                    canvasGo.transform.localScale = Vector3.one * 0.01f;
-                    var canvas = canvasGo.GetComponent<Canvas>();
-                    canvas.renderMode = RenderMode.WorldSpace;
-                    canvas.sortingOrder = 50;
-                    var canvasRt = canvasGo.GetComponent<RectTransform>();
-                    canvasRt.sizeDelta = new Vector2(chargeRingRadius * 200f, chargeRingRadius * 200f);
-
-                    // Background: тусклое серое кольцо (SpriteRenderer под fill).
-                    if (chargeRingBackground == null)
-                    {
-                        var bgGo = new GameObject("ChargeRingBackground", typeof(SpriteRenderer));
-                        bgGo.transform.SetParent(canvasGo.transform, false);
-                        bgGo.transform.localPosition = Vector3.zero;
-                        bgGo.transform.localScale = Vector3.one * (chargeRingRadius * 100f);
-                        var bgSr = bgGo.GetComponent<SpriteRenderer>();
-                        bgSr.sprite = LoadSprite("Drone/Drone_ChargeRing_BG", ref cachedRingBgSprite);
-                        bgSr.color = new Color(1f, 1f, 1f, 0.25f);
-                        bgSr.sortingOrder = 51;
-                        chargeRingBackground = bgSr;
-                    }
-
-                    // Fill: UI Image с radial 360.
-                    if (chargeRingFill == null)
-                    {
-                        var fillGo = new GameObject("ChargeRingFill",
-                            typeof(RectTransform), typeof(UnityEngine.UI.Image));
-                        fillGo.transform.SetParent(canvasGo.transform, false);
-                        var fillRt = fillGo.GetComponent<RectTransform>();
-                        fillRt.anchorMin = Vector2.zero;
-                        fillRt.anchorMax = Vector2.one;
-                        fillRt.offsetMin = Vector2.zero;
-                        fillRt.offsetMax = Vector2.zero;
-                        var img = fillGo.GetComponent<UnityEngine.UI.Image>();
-                        img.sprite = LoadSprite("Drone/Drone_ChargeFill", ref cachedRingFillSprite);
-                        img.type = UnityEngine.UI.Image.Type.Filled;
-                        img.fillMethod = UnityEngine.UI.Image.FillMethod.Radial360;
-                        img.fillOrigin = (int)UnityEngine.UI.Image.Origin360.Top;
-                        img.fillClockwise = true;
-                        img.fillAmount = 1f;
-                        img.color = chargeReadyColor;
-                        img.raycastTarget = false;
-                        chargeRingFill = img;
-                    }
-
-                    visualsAutoCreated = true;
-                }
+                var t = transform.Find("ChargeCircle");
+                if (t != null) chargeRingRenderer = t.GetComponent<SpriteRenderer>();
+            }
+            if (chargeRingRenderer != null)
+            {
+                chargeRingBaseScale = chargeRingRenderer.transform.localScale;
             }
         }
 
@@ -336,40 +269,35 @@ namespace CurlingRoyale.Player
 
         private void UpdateChargeRing()
         {
-            // Управляет видимостью/цветом/fillAmount chargeRingFill (UnityEngine.UI.Image).
+            // Управляет видимостью/цветом/scale кольца зарядки (ChargeCircle SpriteRenderer).
             // 3 состояния:
-            //   -- isCharging:   fillAmount = chargeProgress (0..1), color = firing (red)
-            //   -- !isCharging && reload.IsReady: fillAmount = 1, color = ready (green)
-            //   -- !isCharging && !reload.IsReady (cooldown): hide ring entirely
-            if (chargeRingFill != null)
+            //   -- isCharging:           color = red (firing), scale *= (1 + t * 0.5)
+            //   -- !isCharging && ready: color = green (ready), scale = base
+            //   -- !isCharging && cooldown: hide ring entirely
+            if (chargeRingRenderer == null) return;
+
+            if (isCharging)
             {
-                if (isCharging)
-                {
-                    float t = Mathf.Clamp01((Time.time - chargeStartTime) / maxChargeTime);
-                    chargeRingFill.gameObject.SetActive(true);
-                    chargeRingFill.fillAmount = t;
-                    Color c = chargeFiringColor;
-                    c.a = 1f;
-                    chargeRingFill.color = c;
-                }
-                else if (reload != null && reload.IsReady)
-                {
-                    chargeRingFill.gameObject.SetActive(true);
-                    chargeRingFill.fillAmount = 1f;
-                    Color c = chargeReadyColor;
-                    c.a = 0.85f;
-                    chargeRingFill.color = c;
-                }
-                else
-                {
-                    chargeRingFill.gameObject.SetActive(false);
-                }
+                float t = Mathf.Clamp01((Time.time - chargeStartTime) / maxChargeTime);
+                if (!chargeRingRenderer.gameObject.activeSelf)
+                    chargeRingRenderer.gameObject.SetActive(true);
+                Color c = chargeFiringColor;
+                c.a = 1f;
+                chargeRingRenderer.color = c;
+                float chargeMul = 1f + t * 0.5f; // 1.0 → 1.5
+                chargeRingRenderer.transform.localScale = chargeRingBaseScale * chargeMul;
             }
-            if (chargeRingBackground != null)
+            else if (reload != null && reload.IsReady)
             {
-                bool show = isCharging || (reload != null && reload.IsReady);
-                if (chargeRingBackground.gameObject.activeSelf != show)
-                    chargeRingBackground.gameObject.SetActive(show);
+                if (!chargeRingRenderer.gameObject.activeSelf)
+                    chargeRingRenderer.gameObject.SetActive(true);
+                chargeRingRenderer.color = chargeReadyColor;
+                chargeRingRenderer.transform.localScale = chargeRingBaseScale;
+            }
+            else
+            {
+                if (chargeRingRenderer.gameObject.activeSelf)
+                    chargeRingRenderer.gameObject.SetActive(false);
             }
         }
 
