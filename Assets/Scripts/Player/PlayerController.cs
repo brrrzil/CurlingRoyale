@@ -140,7 +140,8 @@ namespace CurlingRoyale.Player
             // ─── DEBUG: детальная диагностика charge ring (временный код) ──────────
             if (Time.frameCount % 30 == 0) // раз в ~0.5 сек
             {
-                Debug.Log($"[PlayerDiag] isCharging={isCharging} reload.IsReady={reload?.IsReady} pointer={pointerWorld?.ToString() ?? "NULL"} ringFill={(chargeRingFill != null ? "OK" : "NULL")} dist={(pointerWorld.HasValue ? Vector2.Distance(pointerWorld.Value, transform.position).ToString("F2") : "-")}");
+                float spd = (GetComponent<Rigidbody2D>() != null) ? GetComponent<Rigidbody2D>().linearVelocity.magnitude : -1f;
+                Debug.Log($"[PlayerDiag] isCharging={isCharging} reload.IsReady={reload?.IsReady} speed={spd:F2} pointer={pointerWorld?.ToString() ?? "NULL"} ringFill={(chargeRingFill != null ? "OK" : "NULL")} dist={(pointerWorld.HasValue ? Vector2.Distance(pointerWorld.Value, transform.position).ToString("F2") : "-")}");
             }
             // ────────────────────────────────────────────────────────────────────────
 
