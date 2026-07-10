@@ -62,14 +62,16 @@ namespace CurlingRoyale.Bots
             physicsBody = GetComponent<CustomPhysicsBody>();
             reload = GetComponent<ReloadController>();
             combat = GetComponent<CurlingRoyale.Combat.StoneCombat>();
-            // Fallback: ищем Image внутри ChargeRing Canvas по имени.
+            // Fallback: ищем Image "ChargeRingFill" в любом дочернем Canvas.
             if (chargeRingFill == null)
             {
-                var canvasT = transform.Find("ChargeRingCanvas");
-                if (canvasT != null)
+                foreach (var img in GetComponentsInChildren<UnityEngine.UI.Image>(true))
                 {
-                    var fillT = canvasT.Find("ChargeRingFill");
-                    if (fillT != null) chargeRingFill = fillT.GetComponent<UnityEngine.UI.Image>();
+                    if (img.gameObject.name == "ChargeRingFill")
+                    {
+                        chargeRingFill = img;
+                        break;
+                    }
                 }
             }
             hasChargeRing = chargeRingFill != null;
