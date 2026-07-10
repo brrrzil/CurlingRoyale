@@ -34,10 +34,6 @@ namespace CurlingRoyale.Bots
         [Header("Цвета charge ring (авто-создаваемого)")]
         public Color ringMinColor = new Color(0.3f, 0.85f, 0.4f, 0.85f);
         public Color ringMaxColor = new Color(0.95f, 0.3f, 0.3f, 0.85f);
-        [Tooltip("Множитель размера кольца в начале зарядки (1.0 = базовый размер из префаба).")]
-        [Range(0.5f, 1.5f)] public float ringStartScaleMul = 1f;
-        [Tooltip("Множитель размера кольца в конце зарядки (при maxForce).")]
-        [Range(0.5f, 2.5f)] public float ringEndScaleMul = 1.3f;
 
         [Header("Звук зарядки")]
         [SerializeField] private AudioSource chargeAudioSource;
@@ -56,11 +52,9 @@ namespace CurlingRoyale.Bots
         private float aimTimer;
         private float cooldownTimer;
 
-        // Ring: ищем в префабе, иначе ничего (без runtime-создания).
-        [Tooltip("SpriteRenderer кольца зарядки (ChargeCircle в префабе). " +
-                 "Цвет: green=ready, red=charging. Размер растёт по мере зарядки.")]
-        [SerializeField] private SpriteRenderer chargeCircleRenderer;
-        private Vector3 chargeCircleBaseScale = Vector3.one;
+        // Ring: UI Image с Type=Filled, FillMethod=Radial360, Clockwise=true. Из префаба.
+        [Tooltip("UI Image кольца зарядки (в префабе). fillAmount = t при зарядке (0..1).")]
+        [SerializeField] private UnityEngine.UI.Image chargeRingFill;
         private bool hasChargeRing;
 
         void Awake()
@@ -68,16 +62,17 @@ namespace CurlingRoyale.Bots
             physicsBody = GetComponent<CustomPhysicsBody>();
             reload = GetComponent<ReloadController>();
             combat = GetComponent<CurlingRoyale.Combat.StoneCombat>();
-            if (chargeCircleRenderer == null)
+            // Fallback: ищем Image внутри ChargeRing Canvas по имени.
+            if (chargeRingFill == null)
             {
-                var t = transform.Find("ChargeCircle");
-                if (t != null) chargeCircleRenderer = t.GetComponent<SpriteRenderer>();
+                var canvasT = transform.Find("ChargeRingCanvas");
+                if (canvasT != null)
+                {
+                    var fillT = canvasT.Find("ChargeRingFill");
+                    if (fillT != null) chargeRingFill = fillT.GetComponent<UnityEngine.UI.Image>();
+                }
             }
-            if (chargeCircleRenderer != null)
-            {
-                hasChargeRing = true;
-                chargeCircleBaseScale = chargeCircleRenderer.transform.localScale;
-            }
+            hasChargeRing = chargeRingFill != null;
         }
 
         void OnEnable()
@@ -261,23 +256,22 @@ namespace CurlingRoyale.Bots
                 chargeAudioSource.Stop();
         }
 
-        // ─── Ring ───────────────────────────────────────────────────
+        // ─── Ring (radial fill clockwise) ──────────────────────────
 
         private void SetRingActive(bool active)
         {
-            if (chargeCircleRenderer != null && chargeCircleRenderer.gameObject.activeSelf != active)
-                chargeCircleRenderer.gameObject.SetActive(active);
+            if (chargeRingFill != null && chargeRingFill.gameObject.activeSelf != active)
+                chargeRingFill.gameObject.SetActive(active);
         }
 
         private void UpdateRingVisual()
         {
-            if (chargeCircleRenderer == null) return;
+            if (chargeRingFill == null) return;
             float t = Mathf.Clamp01((Time.time - chargeStartTime) / Mathf.Max(0.01f, chargeDuration));
+            // fillAmount: 0 → 1 по часовой стрелке (Type=Filled, FillMethod=Radial360, Clockwise=true).
+            chargeRingFill.fillAmount = t;
             // Color: green (ready) → red (charging) by t.
-            chargeCircleRenderer.color = Color.Lerp(ringMinColor, ringMaxColor, t);
-            // Scale: ringStartScaleMul → ringEndScaleMul.
-            float scaleMul = Mathf.Lerp(ringStartScaleMul, ringEndScaleMul, t);
-            chargeCircleRenderer.transform.localScale = chargeCircleBaseScale * scaleMul;
+            chargeRingFill.color = Color.Lerp(ringMinColor, ringMaxColor, t);
         }
     }
 }
