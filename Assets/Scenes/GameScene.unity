@@ -1176,8 +1176,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9dcb32e64345bab4fb5dd624c3b546e8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CurlingRoyale.Audio.SoundManager
-  collisionClips:
-  - {fileID: 8300000, guid: f29ff9739f1362a4f883c2dbb081dfe5, type: 3}
+  collisionClips: []
   baseVolume: 0.7
   spatialBlend: 0
 --- !u!114 &1735535423
@@ -1192,8 +1191,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: db093174735120b41a365dfc672ba616, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CurlingRoyale.Audio.MusicManager
-  musicClips:
-  - {fileID: 8300000, guid: 2eb0e38c14c783244a77b3bfecd12e01, type: 3}
+  musicClips: []
   shuffle: 1
   volume: 0.5
   delayBetweenTracks: 1.5

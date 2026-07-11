@@ -60,7 +60,7 @@ namespace CurlingRoyale.Audio
                 foreach (var c in all)
                 {
                     if (c == null) continue;
-                    if (c.name.StartsWith("SFX_") || c.name.StartsWith("Collision_") || c.name.StartsWith("DroneClank_"))
+                    if (c.name.StartsWith("SFX_") || c.name.StartsWith("Collision_") || c.name.StartsWith("DroneHit_") || c.name.StartsWith("DroneClank_"))
                         list.Add(c);
                 }
                 collisionClips = list.ToArray();
