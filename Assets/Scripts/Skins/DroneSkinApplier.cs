@@ -37,22 +37,26 @@ namespace CurlingRoyale.Skins
 
         void Start()
         {
-            // Применяем скин при старте. Если SkinSelector.Instance уже есть —
-            // берём его Current. Иначе — первый скин из реестра.
-            DroneSkin toApply = null;
-            if (SkinSelector.Instance != null && SkinSelector.Instance.Current != null)
-            {
-                toApply = SkinSelector.Instance.Current;
-                SkinSelector.Instance.onSkinChanged += ApplySkin;
-            }
-            else
-            {
-                toApply = DroneSkinsRegistry.Instance != null ? DroneSkinsRegistry.Instance.Get(0) : null;
-            }
-            ApplySkin(toApply);
+            // По умолчанию НЕ применяем скин автоматически. Дроны остаются с prefab-цветами.
+            // Чтобы включить скины -- нужно явно вызвать ApplySkin() (например, из MainMenu).
+            // Это сделано чтобы при добавлении скин-системы не перекрашивать все дроны в игре.
         }
 
-        void OnDestroy()
+        /// <summary>
+        /// Подписаться на смену скина через SkinSelector. Вызывать из MainMenu/UI shop'а.
+        /// </summary>
+        public void EnableAutoSkin()
+        {
+            if (SkinSelector.Instance != null)
+            {
+                SkinSelector.Instance.onSkinChanged -= ApplySkin;
+                SkinSelector.Instance.onSkinChanged += ApplySkin;
+                if (SkinSelector.Instance.Current != null)
+                    ApplySkin(SkinSelector.Instance.Current);
+            }
+        }
+
+        public void DisableAutoSkin()
         {
             if (SkinSelector.Instance != null)
                 SkinSelector.Instance.onSkinChanged -= ApplySkin;
