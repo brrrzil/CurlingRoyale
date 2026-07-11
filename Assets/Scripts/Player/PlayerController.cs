@@ -281,7 +281,7 @@ namespace CurlingRoyale.Player
                 float t = Mathf.Clamp01((Time.time - chargeStartTime) / maxChargeTime);
                 if (!chargeRingFill.gameObject.activeSelf)
                     chargeRingFill.gameObject.SetActive(true);
-                chargeRingFill.fillAmount = 1f - t;
+                chargeRingFill.fillAmount = t;
                 Color c = chargeFiringColor;
                 c.a = 1f;
                 chargeRingFill.color = c;

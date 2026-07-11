@@ -270,8 +270,8 @@ namespace CurlingRoyale.Bots
         {
             if (chargeRingFill == null) return;
             float t = Mathf.Clamp01((Time.time - chargeStartTime) / Mathf.Max(0.01f, chargeDuration));
-            // fillAmount: 1 → 0 по часовой стрелке (кольцо видно на старте зарядки, опустошается к концу).
-            chargeRingFill.fillAmount = 1f - t;
+            // fillAmount: 0 → 1 по часовой стрелке (кольцо заполняется по мере зарядки).
+            chargeRingFill.fillAmount = t;
             // Color: green (ready) → red (charging) by t.
             chargeRingFill.color = Color.Lerp(ringMinColor, ringMaxColor, t);
         }
