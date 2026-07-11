@@ -273,15 +273,11 @@ namespace CurlingRoyale.Player
                 }
             }
 
-            // Кольцо зарядки: крутится в сторону выстрела.
-            // m_FillOrigin=2 (Right) — точка старта заполнения на «3 часа» локального RectTransform.
-            // Хотим, чтобы эта точка совпала с направлением удара (direction) в мире.
-            // В Unity Z-rotation CCW positive. Направление direction = (cos θ, sin θ) → θ = atan2(y, x).
-            // Нужно повернуть ring на θ, чтобы его локальный «right» указывал в direction.
+            // Кольцо зарядки всегда в исходном положении (rotation = identity).
+            // Не крутится вместе с направлением движения -- только цвет/fillAmount меняются.
             if (chargeRingFill != null)
             {
-                float dirAngleDeg = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-                chargeRingFill.rectTransform.localRotation = Quaternion.Euler(0f, 0f, dirAngleDeg);
+                chargeRingFill.rectTransform.localRotation = Quaternion.identity;
             }
         }
 
