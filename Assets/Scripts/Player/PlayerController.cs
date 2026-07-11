@@ -259,6 +259,17 @@ namespace CurlingRoyale.Player
                     sr.color = baseCol;
                 }
             }
+
+            // Кольцо зарядки: крутится в сторону выстрела.
+            // m_FillOrigin=2 (Right) — точка старта заполнения на «3 часа» локального RectTransform.
+            // Хотим, чтобы эта точка совпала с направлением удара (direction) в мире.
+            // В Unity Z-rotation CCW positive. Направление direction = (cos θ, sin θ) → θ = atan2(y, x).
+            // Нужно повернуть ring на θ, чтобы его локальный «right» указывал в direction.
+            if (chargeRingFill != null)
+            {
+                float dirAngleDeg = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+                chargeRingFill.rectTransform.localRotation = Quaternion.Euler(0f, 0f, dirAngleDeg);
+            }
         }
 
         private void HideChargeVisual()
@@ -284,6 +295,7 @@ namespace CurlingRoyale.Player
                 chargeRingFill.fillAmount = t;
                 Color c = chargeFiringColor;
                 chargeRingFill.color = c;
+                // Кольцо крутится в сторону выстрела — rotation выставляется в UpdateChargeVisual.
             }
             else if (reload != null && reload.IsReady)
             {
@@ -292,6 +304,8 @@ namespace CurlingRoyale.Player
                 chargeRingFill.fillAmount = 1f;
                 Color c = chargeReadyColor;
                 chargeRingFill.color = c;
+                // В Ready кольцо всегда ровно (rotation 0) — части дрона запрещено крутиться по Z.
+                chargeRingFill.rectTransform.localRotation = Quaternion.identity;
             }
             else
             {
