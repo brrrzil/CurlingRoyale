@@ -295,7 +295,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 350, y: 350}
+  m_SizeDelta: {x: 320, y: 320}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!223 &1215276966157021900
 Canvas:
@@ -418,7 +418,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.09451604, g: 1, b: 0, a: 1}
+  m_Color: {r: 0, g: 1, b: 0.6262355, a: 0.5882353}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -778,7 +778,7 @@ MonoBehaviour:
   chargeRingFill: {fileID: 1301765889779445726}
   chargeRingRadius: 0.45
   chargeReadyColor: {r: 0.2, g: 1, b: 0.3, a: 0.85}
-  chargeFiringColor: {r: 1, g: 0.2, b: 0.2, a: 0.95}
+  chargeFiringColor: {r: 0.19999999, g: 0.83630526, b: 1, a: 0.5882353}
   aimArrowMaxLength: 0.5
   chargeAudioSource: {fileID: 0}
   chargeLoopClip: {fileID: 0}
