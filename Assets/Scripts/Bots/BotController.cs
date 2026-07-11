@@ -266,6 +266,15 @@ namespace CurlingRoyale.Bots
                 chargeRingFill.gameObject.SetActive(active);
         }
 
+        void LateUpdate()
+        {
+            // Канвас с кольцом: фиксируем world rotation = identity (см. PlayerController).
+            if (chargeRingFill != null && chargeRingFill.canvas != null)
+            {
+                chargeRingFill.canvas.transform.rotation = Quaternion.identity;
+            }
+        }
+
         private void UpdateRingVisual()
         {
             if (chargeRingFill == null) return;

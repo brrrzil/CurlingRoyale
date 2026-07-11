@@ -86,24 +86,31 @@ namespace CurlingRoyale.Game
         {
             StoneCombat[] all = FindObjectsByType<StoneCombat>(FindObjectsSortMode.None);
             StoneCombat alive = null;
+            StoneCombat player = null;
             int aliveCount = 0;
             for (int i = 0; i < all.Length; i++)
             {
-                if (all[i] != null && !all[i].IsDead)
-                {
-                    alive = all[i];
-                    aliveCount++;
-                }
+                var s = all[i];
+                if (s == null) continue;
+                if (s.GetComponent<CurlingRoyale.Player.PlayerController>() != null) player = s;
+                if (!s.IsDead) { alive = s; aliveCount++; }
             }
 
             if (winnerText != null)
             {
+                bool playerDead = player == null || player.IsDead;
                 if (aliveCount == 1)
-                    winnerText.text = $"Победа!";
+                {
+                    // 1 жив — но это может быть бот (если игрок погиб).
+                    if (playerDead)
+                        winnerText.text = $"Вы проиграли. Победил: {alive.name}";
+                    else
+                        winnerText.text = $"Победа! Победил: {alive.name}";
+                }
                 else if (aliveCount == 0)
                     winnerText.text = "Ничья (все погибли)";
                 else
-                    winnerText.text = $"Вы проиграли ({aliveCount} живых)";
+                    winnerText.text = $"Матч окончен ({aliveCount} живых)";
             }
 
             // Активируем ПОСЛЕ изменения текста -- иначе порядок рендера/расчёта layout'а может не успеть.

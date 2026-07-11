@@ -174,6 +174,19 @@ namespace CurlingRoyale.Player
             UpdateChargeRing();
         }
 
+        void LateUpdate()
+        {
+            // Канвас с кольцом зарядки: фиксируем world rotation = identity.
+            // Rigidbody2D.m_Constraints = FreezeRotation блокирует только физику,
+            // transform всё равно может крутиться (через прямой transform.rotation=...).
+            // LateUpdate идёт ПОСЛЕ Update, в котором UpdateChargeVisual ставит
+            // ring.localRotation -- здесь зажимаем родителя (canvas) в world-0.
+            if (chargeRingFill != null && chargeRingFill.canvas != null)
+            {
+                chargeRingFill.canvas.transform.rotation = Quaternion.identity;
+            }
+        }
+
         // ─── Зарядка ──────────────────────────────────────────────
 
         private void StartCharge()
