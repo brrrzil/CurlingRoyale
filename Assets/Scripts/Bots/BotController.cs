@@ -1,5 +1,6 @@
 using UnityEngine;
 using CurlingRoyale.Combat;
+using CurlingRoyale.Skins;
 using CurlingRoyale.Game;
 
 namespace CurlingRoyale.Bots
@@ -34,6 +35,9 @@ namespace CurlingRoyale.Bots
         [Header("Цвета charge ring (авто-создаваемого)")]
         public Color ringMinColor = new Color(0.3f, 0.85f, 0.4f, 0.85f);
         public Color ringMaxColor = new Color(0.95f, 0.3f, 0.3f, 0.85f);
+
+        [Header("Скин (опционально)")]
+        [SerializeField] private DroneSkinApplier skinApplier;
 
         [Header("Звук зарядки")]
         [SerializeField] private AudioSource chargeAudioSource;
@@ -244,6 +248,8 @@ namespace CurlingRoyale.Bots
                 chargeAudioSource.volume = chargeLoopVolume;
                 chargeAudioSource.Play();
             }
+            if (skinApplier == null) skinApplier = GetComponent<DroneSkinApplier>();
+            if (skinApplier == null) skinApplier = GetComponentInChildren<DroneSkinApplier>(true);
         }
 
         private void ReleaseShot()
@@ -273,6 +279,13 @@ namespace CurlingRoyale.Bots
             {
                 chargeRingFill.canvas.transform.rotation = Quaternion.identity;
             }
+        }
+
+        private Color GetRingColorByCharge(float t)
+        {
+            if (skinApplier != null && skinApplier.CurrentSkin != null)
+                return Color.Lerp(skinApplier.GetRingReadyColor(), skinApplier.GetRingFiringColor(), t);
+            return Color.Lerp(ringMinColor, ringMaxColor, t);
         }
 
         private void UpdateRingVisual()

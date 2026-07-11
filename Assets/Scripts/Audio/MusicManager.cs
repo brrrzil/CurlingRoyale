@@ -49,11 +49,18 @@ namespace CurlingRoyale.Audio
             source.playOnAwake = false;
             source.volume = 0f;
 
-            // Fallback: если клипы не заданы -- загружаем все AudioClip из Resources/Audio.
+            // Fallback: если клипы не заданы -- загружаем из Resources/Audio только треки
+            // (имя файла начинается с "Theme_"). SFX_* в музыку не попадают.
             if (musicClips == null || musicClips.Length == 0)
             {
-                musicClips = Resources.LoadAll<AudioClip>("Audio");
-                // Из них исключаем Collision_Stone (это не музыка).
+                var all = Resources.LoadAll<AudioClip>("Audio");
+                var list = new System.Collections.Generic.List<AudioClip>();
+                foreach (var c in all)
+                {
+                    if (c == null) continue;
+                    if (c.name.StartsWith("Theme_")) list.Add(c);
+                }
+                musicClips = list.ToArray();
             }
         }
 

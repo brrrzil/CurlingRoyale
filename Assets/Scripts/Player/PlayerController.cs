@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using CurlingRoyale.Combat;
+using CurlingRoyale.Skins;
 
 namespace CurlingRoyale.Player
 {
@@ -28,6 +29,10 @@ namespace CurlingRoyale.Player
         [Range(0.05f, 0.6f)] public float chargeRingRadius = 0.45f; // в world units
         public Color chargeReadyColor = new Color(0.2f, 1f, 0.3f, 0.85f); // green
         public Color chargeFiringColor = new Color(1f, 0.2f, 0.2f, 0.95f); // red
+
+        [Header("Скин (опционально)")]
+        [Tooltip("Если задан -- цвета кольца берутся из скина, а поля выше игнорятся.")]
+        [SerializeField] private DroneSkinApplier skinApplier;
         [Tooltip("Длина стрелки в world units. Если 0 -- автоматически по дистанции до pointer.")]
         public float aimArrowMaxLength = 5f;
 
@@ -67,6 +72,9 @@ namespace CurlingRoyale.Player
             // Запоминаем базовый размер стрелки, чтобы не перетирать то, что юзер поставил в префабе.
             if (aimArrowSprite != null) aimArrowBaseScale = aimArrowSprite.transform.localScale;
             HideChargeVisual();
+            // Инициализируем ссылку на DroneSkinApplier (для скинов дрона).
+            if (skinApplier == null) skinApplier = GetComponent<DroneSkinApplier>();
+            if (skinApplier == null) skinApplier = GetComponentInChildren<DroneSkinApplier>(true);
         }
 
         /// <summary>
@@ -122,8 +130,22 @@ namespace CurlingRoyale.Player
 
         // ─── Update ────────────────────────────────────────────────
 
+        [Header("Debug")]
+        [Tooltip("Клавиша переключения скина (для теста shop'а).")]
+        public Key skinSwitchKey = Key.T;
+
         void Update()
         {
+            // Хоткей переключения скина (только для теста; в проде -- через UI shop'а).
+            if (Keyboard.current != null && Keyboard.current[skinSwitchKey].wasPressedThisFrame)
+            {
+                if (CurlingRoyale.Skins.SkinSelector.Instance != null)
+                {
+                    CurlingRoyale.Skins.SkinSelector.Instance.Next();
+                    Debug.Log($"[PlayerController] Скин переключён на: {CurlingRoyale.Skins.SkinSelector.Instance.Current?.skinName ?? "<null>"}");
+                }
+            }
+
             // Определяем переход: был мёртв -> стал жив. Это момент возрождения (после Restart).
             bool isDead = combat != null && combat.IsDead;
             if (wasDeadLastUpdate && !isDead) ResetPlayerState();
@@ -302,8 +324,7 @@ namespace CurlingRoyale.Player
                 if (!chargeRingFill.gameObject.activeSelf)
                     chargeRingFill.gameObject.SetActive(true);
                 chargeRingFill.fillAmount = t;
-                Color c = chargeFiringColor;
-                chargeRingFill.color = c;
+                chargeRingFill.color = GetRingColor(true);
                 // Кольцо крутится в сторону выстрела — rotation выставляется в UpdateChargeVisual.
             }
             else if (reload != null && reload.IsReady)
@@ -311,8 +332,7 @@ namespace CurlingRoyale.Player
                 if (!chargeRingFill.gameObject.activeSelf)
                     chargeRingFill.gameObject.SetActive(true);
                 chargeRingFill.fillAmount = 1f;
-                Color c = chargeReadyColor;
-                chargeRingFill.color = c;
+                chargeRingFill.color = GetRingColor(false);
                 // В Ready кольцо всегда ровно (rotation 0) — части дрона запрещено крутиться по Z.
                 chargeRingFill.rectTransform.localRotation = Quaternion.identity;
             }
@@ -321,6 +341,16 @@ namespace CurlingRoyale.Player
                 if (chargeRingFill.gameObject.activeSelf)
                     chargeRingFill.gameObject.SetActive(false);
             }
+        }
+
+        /// <summary>
+        /// Цвет кольца: из скина (если есть) или из локального поля.
+        /// </summary>
+        private Color GetRingColor(bool firing)
+        {
+            if (skinApplier != null && skinApplier.CurrentSkin != null)
+                return firing ? skinApplier.GetRingFiringColor() : skinApplier.GetRingReadyColor();
+            return firing ? chargeFiringColor : chargeReadyColor;
         }
 
         private void ShowChargeVisualIfReady()

@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1b2c3d4e5f67890a1b2c3d4e5f67890, type: 3}
+  m_Name: DroneSkin_Crimson
+  m_EditorClassIdentifier: 
+  skinName: Crimson
+  skinId: crimson
+  frameColor: {r: 0.6, g: 0.1, b: 0.15, a: 1}
+  bladesColor: {r: 1, g: 0.25, b: 0.1, a: 1}
+  coreColor: {r: 1, g: 0.85, b: 0.2, a: 1}
+  aimArrowColor: {r: 1, g: 0.9, b: 0.8, a: 1}
+  ringReadyColor: {r: 1, g: 0.4, b: 0.2, a: 0.85}
+  ringFiringColor: {r: 1, g: 1, b: 0.2, a: 1}
+  trailColor: {r: 1, g: 0.3, b: 0.1, a: 0.5}

@@ -51,11 +51,19 @@ namespace CurlingRoyale.Audio
             source.spatialBlend = spatialBlend;
             source.volume = 1f;
 
-            // Если клипы не заданы в инспекторе -- пробуем Resources/Audio.
+            // Если клипы не заданы в инспекторе -- загружаем все AudioClip из Resources/Audio,
+            // имя которых начинается с "SFX_", "Collision_" или "DroneClank_". Треки (Theme_*) пропускаем.
             if (collisionClips == null || collisionClips.Length == 0)
             {
-                var c = Resources.Load<AudioClip>("Audio/Collision_Stone");
-                if (c != null) collisionClips = new[] { c };
+                var all = Resources.LoadAll<AudioClip>("Audio");
+                var list = new System.Collections.Generic.List<AudioClip>();
+                foreach (var c in all)
+                {
+                    if (c == null) continue;
+                    if (c.name.StartsWith("SFX_") || c.name.StartsWith("Collision_") || c.name.StartsWith("DroneClank_"))
+                        list.Add(c);
+                }
+                collisionClips = list.ToArray();
             }
         }
 
