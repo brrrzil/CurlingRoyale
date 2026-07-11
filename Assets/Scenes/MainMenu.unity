@@ -1802,6 +1802,7 @@ GameObject:
   - component: {fileID: 1218224642}
   - component: {fileID: 1218224641}
   - component: {fileID: 1218224640}
+  - component: {fileID: 1218224644}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -1905,6 +1906,21 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!114 &1218224644
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1218224639}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b3c4d5e6f70819203a4b5c6d7e8f9a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CurlingRoyale.UI.MenuButtonBinder
+  fallbackTarget: {fileID: 0}
+  hideAllPanelsOnStart: 1
+  defaultPanel: 
 --- !u!1 &1323107778
 GameObject:
   m_ObjectHideFlags: 0
