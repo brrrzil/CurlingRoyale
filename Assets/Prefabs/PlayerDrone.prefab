@@ -655,6 +655,7 @@ GameObject:
   - component: {fileID: 1408237307151971140}
   - component: {fileID: -4067264744675236013}
   - component: {fileID: 2261569622813082235}
+  - component: {fileID: 3508552050974209699}
   m_Layer: 0
   m_Name: PlayerDrone
   m_TagString: Untagged
@@ -779,10 +780,12 @@ MonoBehaviour:
   chargeRingRadius: 0.45
   chargeReadyColor: {r: 0.2, g: 1, b: 0.3, a: 0.85}
   chargeFiringColor: {r: 0.19999999, g: 0.83630526, b: 1, a: 0.5882353}
+  skinApplier: {fileID: 0}
   aimArrowMaxLength: 0.5
   chargeAudioSource: {fileID: 0}
   chargeLoopClip: {fileID: 0}
   chargeLoopVolume: 0.4
+  skinSwitchKey: 34
 --- !u!114 &-4067264744675236013
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -832,6 +835,25 @@ MonoBehaviour:
   onReloadComplete:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &3508552050974209699
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8115788672289187133}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2c3d4e5f67890a1b2c3d4e5f67890a1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CurlingRoyale.Skins.DroneSkinApplier
+  frameRenderer: {fileID: 0}
+  bladesUpRenderer: {fileID: 0}
+  bladesBotRenderer: {fileID: 0}
+  coreRenderer: {fileID: 0}
+  aimArrowRenderer: {fileID: 0}
+  chargeRingFill: {fileID: 0}
+  currentSkin: {fileID: 0}
 --- !u!1 &8352809733322527015
 GameObject:
   m_ObjectHideFlags: 0
