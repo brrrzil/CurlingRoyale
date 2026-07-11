@@ -1193,7 +1193,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CurlingRoyale.Audio.MusicManager
   musicClips: []
   shuffle: 1
-  volume: 0.5
+  volume: 0.25
   delayBetweenTracks: 1.5
   fadeInSeconds: 0.4
 --- !u!4 &1735535424

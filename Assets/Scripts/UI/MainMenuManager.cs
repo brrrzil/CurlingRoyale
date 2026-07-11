@@ -3,6 +3,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using TMPro;
 using CurlingRoyale.Skins;
+using CurlingRoyale.Audio;
 
 namespace CurlingRoyale.UI
 {
@@ -118,10 +119,10 @@ namespace CurlingRoyale.UI
         {
             PlayerPrefs.SetInt("CurlingRoyale.MusicOn", on ? 1 : 0);
             PlayerPrefs.Save();
-            if (CurlingRoyale.Audio.MusicManager.Instance != null)
+            if (MusicManager.Instance != null)
             {
-                if (on) CurlingRoyale.Audio.MusicManager.Instance.ResumeMusic();
-                else CurlingRoyale.Audio.MusicManager.Instance.PauseMusic();
+                if (on) MusicManager.Instance.ResumeMusic();
+                else MusicManager.Instance.PauseMusic();
             }
         }
 
@@ -129,9 +130,9 @@ namespace CurlingRoyale.UI
         {
             PlayerPrefs.SetInt("CurlingRoyale.SfxOn", on ? 1 : 0);
             PlayerPrefs.Save();
-            if (CurlingRoyale.Audio.SoundManager.Instance != null)
+            if (SoundManager.Instance != null)
             {
-                CurlingRoyale.Audio.SoundManager.Instance.SetVolume(on ? 0.7f : 0f);
+                SoundManager.Instance.SetVolume(on ? 0.7f : 0f);
             }
         }
     }

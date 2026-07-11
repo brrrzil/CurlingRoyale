@@ -20,7 +20,7 @@ namespace CurlingRoyale.Audio
         [SerializeField] private bool shuffle = true;
 
         [Header("Громкость")]
-        [Range(0f, 1f)] [SerializeField] private float volume = 0.5f;
+        [Range(0f, 1f)] [SerializeField] private float volume = 0.25f;
 
         [Header("Поведение")]
         [Tooltip("Задержка между треками при shuffle.")]
@@ -29,23 +29,26 @@ namespace CurlingRoyale.Audio
         [Tooltip("Fade-in на старте.")]
         [Range(0f, 2f)] [SerializeField] private float fadeInSeconds = 0.4f;
 
+        [Tooltip("Зацикливать каждый трек. Если false -- один раз до конца и стоп.")]
+        [SerializeField] private bool loopEachTrack = true;
+
         private AudioSource source;
-        private static MusicManager instance;
+        public static MusicManager Instance { get; private set; }
 
         void Awake()
         {
-            if (instance != null && instance != this)
+            if (Instance != null && Instance != this)
             {
                 Destroy(gameObject);
                 return;
             }
-            instance = this;
+            Instance = this;
             DontDestroyOnLoad(gameObject);
 
             source = GetComponent<AudioSource>();
             if (source == null)
                 source = gameObject.AddComponent<AudioSource>();
-            source.loop = false;
+            source.loop = loopEachTrack;
             source.playOnAwake = false;
             source.volume = 0f;
 
@@ -92,16 +95,24 @@ namespace CurlingRoyale.Audio
 
         System.Collections.IEnumerator ShuffleLoop()
         {
+            // Плейлист играет по кругу: каждый трек проигрывается один раз,
+            // затем случайно выбирается следующий. Чтобы плейлист не зацикливался
+            // на одном треке, исключаем последний сыгранный из выбора.
+            int lastPlayed = -1;
             while (true)
             {
-                var clip = musicClips[Random.Range(0, musicClips.Length)];
+                int idx = Random.Range(0, musicClips.Length);
+                if (musicClips.Length > 1 && idx == lastPlayed)
+                    idx = (idx + 1) % musicClips.Length;
+                lastPlayed = idx;
+                var clip = musicClips[idx];
                 if (clip == null)
                 {
                     yield return new WaitForSeconds(1f);
                     continue;
                 }
                 source.clip = clip;
-                source.loop = false;
+                source.loop = false; // каждый трек играет один раз, плейлист зациклен while(true)
                 source.Play();
                 float start = Time.time;
                 while (source.volume < volume)
@@ -111,7 +122,8 @@ namespace CurlingRoyale.Audio
                 }
                 source.volume = volume;
                 yield return new WaitWhile(() => source.isPlaying);
-                yield return new WaitForSeconds(delayBetweenTracks);
+                if (delayBetweenTracks > 0f)
+                    yield return new WaitForSeconds(delayBetweenTracks);
             }
         }
 
