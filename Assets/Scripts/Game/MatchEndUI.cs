@@ -105,7 +105,7 @@ namespace CurlingRoyale.Game
                     if (playerDead)
                         winnerText.text = $"Вы проиграли. Победил: {alive.name}";
                     else
-                        winnerText.text = $"Победа! Победил: {alive.name}";
+                        winnerText.text = $"Победа!";
                 }
                 else if (aliveCount == 0)
                     winnerText.text = "Ничья (все погибли)";
