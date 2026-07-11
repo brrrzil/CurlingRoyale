@@ -99,11 +99,11 @@ namespace CurlingRoyale.Game
             if (winnerText != null)
             {
                 if (aliveCount == 1)
-                    winnerText.text = $"Победил: {alive.name}";
+                    winnerText.text = $"Победа!";
                 else if (aliveCount == 0)
                     winnerText.text = "Ничья (все погибли)";
                 else
-                    winnerText.text = $"Матч окончен ({aliveCount} живых)";
+                    winnerText.text = $"Вы проиграли ({aliveCount} живых)";
             }
 
             // Активируем ПОСЛЕ изменения текста -- иначе порядок рендера/расчёта layout'а может не успеть.
