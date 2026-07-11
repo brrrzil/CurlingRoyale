@@ -283,7 +283,6 @@ namespace CurlingRoyale.Player
                     chargeRingFill.gameObject.SetActive(true);
                 chargeRingFill.fillAmount = t;
                 Color c = chargeFiringColor;
-                c.a = 1f;
                 chargeRingFill.color = c;
             }
             else if (reload != null && reload.IsReady)
@@ -292,7 +291,6 @@ namespace CurlingRoyale.Player
                     chargeRingFill.gameObject.SetActive(true);
                 chargeRingFill.fillAmount = 1f;
                 Color c = chargeReadyColor;
-                c.a = 0.85f;
                 chargeRingFill.color = c;
             }
             else
