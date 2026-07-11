@@ -80,8 +80,10 @@ namespace CurlingRoyale.Audio
 
         System.Collections.IEnumerator PlaySingleLoop()
         {
+            source.Stop();
             source.clip = musicClips[0];
             source.loop = true;
+            Debug.Log($"[MusicManager] Single loop: {musicClips[0].name} (dur {musicClips[0].length:F1}s)");
             source.Play();
 
             float start = Time.time;
