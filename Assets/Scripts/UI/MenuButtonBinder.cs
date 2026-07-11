@@ -25,29 +25,13 @@ namespace CurlingRoyale.UI
         [Tooltip("GameObject со скриптом, у которого ищутся методы OnX. Если null -- ищется на этом объекте.")]
         [SerializeField] private MonoBehaviour fallbackTarget;
 
-        [Header("Поведение панелей")]
-        [Tooltip("Скрывать ли все панели при старте (кроме тех, что marked as 'defaultPanel').")]
-        [SerializeField] private bool hideAllPanelsOnStart = true;
-
-        [Tooltip("Имя панели, которая показывается сразу при старте (например 'Main').")]
-        [SerializeField] private string defaultPanel = "";
-
         private void Start()
         {
-            // Скрываем все панели (опционально)
-            if (hideAllPanelsOnStart)
+            // Скрываем ВСЕ панели при старте -- юзер увидит только корневой UI с кнопками.
+            foreach (var panel in FindAllPanels())
             {
-                foreach (var panel in FindAllPanels())
-                {
-                    if (panel == null) continue;
-                    if (panel.name == defaultPanel) continue;
-                    panel.SetActive(false);
-                }
-            }
-            if (!string.IsNullOrEmpty(defaultPanel))
-            {
-                var def = GameObject.Find(defaultPanel);
-                if (def != null) def.SetActive(true);
+                if (panel == null) continue;
+                panel.SetActive(false);
             }
 
             // Привязываем все кнопки в сцене
@@ -133,6 +117,13 @@ namespace CurlingRoyale.UI
         public void OnPlay()
         {
             UnityEngine.SceneManagement.SceneManager.LoadScene("GameScene");
+        }
+
+        public void OnFullScreen()
+        {
+            // Переключение fullscreen. В WebGL это работает только если билд собран с
+            // fullscreen-template, но вызов безопасен в любой среде.
+            Screen.fullScreen = !Screen.fullScreen;
         }
 
         public void OnExit()
