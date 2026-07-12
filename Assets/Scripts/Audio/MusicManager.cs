@@ -29,6 +29,9 @@ namespace CurlingRoyale.Audio
         [Tooltip("Fade-in на старте.")]
         [Range(0f, 2f)] [SerializeField] private float fadeInSeconds = 0.4f;
 
+        [Tooltip("Префикс имени для автозагрузки из Resources/Audio. Если пусто -- 'Theme_' (по умолчанию). Используй 'Theme_Menu_' для меню, 'Theme_Midcore_' для геймплея.")]
+        [SerializeField] private string trackNamePrefix = "Theme_";
+
         [Tooltip("Зацикливать каждый трек. Если false -- один раз до конца и стоп.")]
         [SerializeField] private bool loopEachTrack = true;
 
@@ -61,7 +64,8 @@ namespace CurlingRoyale.Audio
                 foreach (var c in all)
                 {
                     if (c == null) continue;
-                    if (c.name.StartsWith("Theme_")) list.Add(c);
+                    string prefix = string.IsNullOrEmpty(trackNamePrefix) ? "Theme_" : trackNamePrefix;
+                    if (c.name.StartsWith(prefix)) list.Add(c);
                 }
                 musicClips = list.ToArray();
             }
