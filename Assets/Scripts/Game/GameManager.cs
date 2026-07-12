@@ -42,6 +42,10 @@ namespace CurlingRoyale.Game
         [Tooltip("Длительность фазы MatchStart (перед InProgress). Сейчас можно задать как 'tick before go'.")]
         [Min(0f)] public float chargePhaseDuration = 1.5f;
 
+        [Header("UI паузы (опционально)")]
+        [Tooltip("PausePanel -- открывается при Pause(), закрывается при Resume(). Можно оставить пустым.")]
+        [SerializeField] private GameObject pausePanel;
+
         [Header("Арена (опционально)")]
         [Tooltip("ScriptableObject с параметрами арены. Если задан — используется shrinking.")]
         [SerializeField] private ArenaConfig arenaConfig;
@@ -135,6 +139,7 @@ namespace CurlingRoyale.Game
             IsArenaShrinking = false;
             ChangeState(MatchState.MatchStart);
             PhaseTimeRemaining = chargePhaseDuration;
+            if (pausePanel != null) pausePanel.SetActive(false);
             Invoke(nameof(EnterInProgress), chargePhaseDuration);
         }
 
@@ -152,23 +157,25 @@ namespace CurlingRoyale.Game
             }
         }
 
-        /// <summary>Поставить матч на паузу.</summary>
+        /// <summary>Поставить матч на паузу (открывает pausePanel, если задан).</summary>
         public void Pause()
         {
             if (State == MatchState.InProgress)
             {
                 ChangeState(MatchState.Paused);
                 Time.timeScale = 0f;
+                if (pausePanel != null) pausePanel.SetActive(true);
             }
         }
 
-        /// <summary>Снять с паузы (alias для Continue).</summary>
+        /// <summary>Снять с паузы (закрывает pausePanel, если задан). Alias для Continue.</summary>
         public void Resume()
         {
             if (State == MatchState.Paused)
             {
                 Time.timeScale = 1f;
                 ChangeState(MatchState.InProgress);
+                if (pausePanel != null) pausePanel.SetActive(false);
             }
         }
 
@@ -179,6 +186,7 @@ namespace CurlingRoyale.Game
         public void GoHome()
         {
             Time.timeScale = 1f;
+            if (pausePanel != null) pausePanel.SetActive(false);
             UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
         }
 
