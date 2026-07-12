@@ -19,6 +19,7 @@ namespace CurlingRoyale.Game
             Menu,
             MatchStart,
             InProgress,
+            Paused,
             MatchEnd,
         }
 

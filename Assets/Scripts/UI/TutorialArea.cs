@@ -40,8 +40,16 @@ namespace CurlingRoyale.UI
         [SerializeField] private bool infiniteHP = true;
         [SerializeField] private int infiniteHPValue = 99999;
 
+        [Header("Подсказки управления (опционально)")]
+        [Tooltip("TextMeshPro -- сюда выводим список клавиш. Оставь пустым если не нужно.")]
+        [SerializeField] private TMPro.TextMeshProUGUI controlsHint;
+
+        [Header("Количество ботов")]
+        [Tooltip("Сколько ботов спавнить вокруг игрока. 0 = без ботов, 1 = один справа, 2 = три (по кругу), 3 = семь.")]
+        [Range(0, 3)] [SerializeField] private int botCount = 1;
+
         private GameObject spawnedPlayer;
-        private GameObject spawnedBot;
+        private System.Collections.Generic.List<GameObject> spawnedBots;
 
         void Start()
         {
@@ -68,21 +76,35 @@ namespace CurlingRoyale.UI
             spawnedPlayer.name = "TutorialPlayer";
             MakeInvincible(spawnedPlayer);
 
-            // Спавним бота рядом
-            if (botPrefab != null)
+            // Спавним ботов (количество задаётся botCount)
+            spawnedBots = new System.Collections.Generic.List<GameObject>();
+            if (botPrefab != null && botCount > 0)
             {
-                Vector3 botPos = spawnPoint.position + botSpawnOffset;
-                spawnedBot = Instantiate(botPrefab, botPos, spawnPoint.rotation);
-                spawnedBot.name = "TutorialBot";
-                MakeInvincible(spawnedBot);
-                DisableBotAI(spawnedBot);
+                // Числа ботов: 1=1, 2=3, 3=7 (расположение по кругу)
+                int[] counts = { 0, 1, 3, 7 };
+                int actualCount = counts[Mathf.Clamp(botCount, 0, 3)];
+                for (int i = 0; i < actualCount; i++)
+                {
+                    float angle = (360f / actualCount) * i;
+                    float rad = angle * Mathf.Deg2Rad;
+                    Vector3 offset = new Vector3(Mathf.Cos(rad), Mathf.Sin(rad), 0) * botSpawnOffset.magnitude;
+                    Vector3 botPos = spawnPoint.position + offset;
+                    var b = Instantiate(botPrefab, botPos, spawnPoint.rotation);
+                    b.name = $"TutorialBot_{i}";
+                    MakeInvincible(b);
+                    DisableBotAI(b);
+                    spawnedBots.Add(b);
+                }
             }
         }
 
         void OnDestroy()
         {
             if (spawnedPlayer != null) Destroy(spawnedPlayer);
-            if (spawnedBot != null) Destroy(spawnedBot);
+            if (spawnedBots != null)
+            {
+                foreach (var b in spawnedBots) if (b != null) Destroy(b);
+            }
         }
 
         void MakeInvincible(GameObject go)
@@ -119,6 +141,17 @@ namespace CurlingRoyale.UI
                 var unityEvent = onHealthChangedField.GetValue(combat) as UnityEngine.Events.UnityEvent<int, int>;
                 if (unityEvent != null) unityEvent.Invoke(infiniteHPValue, infiniteHPValue);
             }
+        }
+
+        // Обновить текст подсказок управления
+        void UpdateControlsHint()
+        {
+            if (controlsHint == null) return;
+            controlsHint.text = "<b>УПРАВЛЕНИЕ</b>\n" +
+                "• <color=#00ff88>ЛКМ / Тап</color> — зарядить камень\n" +
+                "• <color=#00ff88>Отпустить ЛКМ</color> — выстрелить\n" +
+                "• <color=#00ff88>Тяни от дрона</color> — направление броска\n\n" +
+                "<i>Целься в ботов -- попробуй!</i>";
         }
 
         void DisableBotAI(GameObject botGo)
