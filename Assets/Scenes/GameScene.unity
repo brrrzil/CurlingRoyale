@@ -1192,7 +1192,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CurlingRoyale.Audio.MusicManager
   musicClips: []
-  trackNamePrefix: Theme_Midcore_
   shuffle: 0
   volume: 0.25
   delayBetweenTracks: 1.5

@@ -4419,7 +4419,6 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: CurlingRoyale.Audio.MusicManager
   musicClips: []
-  trackNamePrefix: Theme_Menu_
   shuffle: 0
   volume: 0.25
   delayBetweenTracks: 1.5

@@ -1,52 +1,42 @@
-using System;
-using System.Reflection;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace CurlingRoyale.UI
 {
     /// <summary>
-    /// Универсальный биндер кнопок в MainMenu.
+    /// Биндер кнопок MainMenu.
     ///
-    /// Два режима работы:
+    /// Два режима:
+    /// 1) **Ручные bindings** в Inspector (рекомендуется): массив `bindings`.
+    ///    Каждый binding -- кнопка + опционально панель.
+    ///    -- panel != null: клик toggle'ит панель.
+    ///    -- panel == null: ничего не делает (используй OnClick в Inspector
+    ///       для вызова публичных методов: OnPlay, OnFullScreen, OnExit).
     ///
-    /// 1) **Ручная привязка** (рекомендуется): заполни массив `bindings` в Inspector.
-    ///    Каждый binding -- кнопка + опционально панель + опционально метод.
-    ///    -- panel != null: клик toggle'ит панель (остальные панели скрываются).
-    ///    -- panel == null && methodName задан: вызывается метод On{methodName}
-    ///       на этом объекте или на fallbackTarget.
-    ///
-    /// 2) **Авто-режим** (если bindings пустое): для каждой Button в сцене ищется
-    ///    панель по имени (SettingsButton -> Settings/SettingsPanel/...) или
-    ///    вызывается метод On{ButtonName} (OnPlay, OnExit и т.п.).
+    /// 2) **Авто-режим** (если bindings пустое): для каждой Button в сцене
+    ///    ищется панель по имени (SettingsButton -> Settings/SettingsPanel).
+    ///    Если панели нет -- ничего не делает.
     /// </summary>
     [DisallowMultipleComponent]
     public class MenuButtonBinder : MonoBehaviour
     {
-        [Serializable]
+        [System.Serializable]
         public class Binding
         {
             [Tooltip("Кнопка в MainMenu.")]
             public Button button;
 
-            [Tooltip("Панель, которую открывает/закрывает кнопка. null = вызвать метод.")]
+            [Tooltip("Панель, которую открывает/закрывает кнопка. null = клик игнорируется биндером (используй OnClick в Inspector).")]
             public GameObject panel;
-
-            [Tooltip("Имя метода БЕЗ префикса 'On'. Например: 'Play' вызовет OnPlay(). Пусто = используется имя GameObject кнопки.")]
-            public string methodName;
         }
 
         [Header("Ручная привязка (если пусто -- авто-режим)")]
         [SerializeField] private Binding[] bindings;
 
-        [Header("Куда отправлять кнопки без панели")]
-        [Tooltip("MonoBehaviour со скриптом, у которого ищутся методы OnX. Если null -- ищется на этом объекте.")]
-        [SerializeField] private MonoBehaviour fallbackTarget;
-
         private void Start()
         {
-            // Скрываем ВСЕ панели, упомянутые в bindings, при старте
-            // (в авто-режиме -- все найденные панели)
+            // Скрываем все панели при старте
             if (bindings != null && bindings.Length > 0)
             {
                 foreach (var b in bindings)
@@ -62,50 +52,40 @@ namespace CurlingRoyale.UI
                 }
             }
 
-            // Привязываем кнопки
+            // Привязываем кнопки (только те, у которых есть панель в bindings)
             if (bindings != null && bindings.Length > 0)
             {
                 foreach (var b in bindings)
                 {
-                    if (b == null || b.button == null) continue;
-                    var captured = b; // для замыкания
+                    if (b == null || b.button == null || b.panel == null) continue;
+                    var captured = b;
                     b.button.onClick.AddListener(() => OnBindingClicked(captured));
                 }
             }
             else
             {
-                // Авто-режим: каждая Button в сцене
+                // Авто-режим: каждая Button ищет панель по имени
                 var buttons = FindObjectsByType<Button>(FindObjectsInactive.Include, FindObjectsSortMode.None);
                 foreach (var btn in buttons)
                 {
                     if (btn == null) continue;
-                    string name = btn.gameObject.name;
-                    btn.onClick.AddListener(() => OnAutoButtonClicked(btn, name));
+                    var panel = FindPanelForButton(btn.gameObject.name);
+                    if (panel == null) continue;
+                    string capturedName = btn.gameObject.name;
+                    btn.onClick.AddListener(() => OnAutoButtonClicked(capturedName));
                 }
             }
         }
 
         void OnBindingClicked(Binding b)
         {
-            if (b.panel != null)
-            {
-                TogglePanel(b.panel);
-            }
-            else
-            {
-                InvokeMethod(b.methodName);
-            }
+            if (b.panel != null) TogglePanel(b.panel);
         }
 
-        void OnAutoButtonClicked(Button btn, string buttonName)
+        void OnAutoButtonClicked(string buttonName)
         {
             var panel = FindPanelForButton(buttonName);
-            if (panel != null)
-            {
-                TogglePanel(panel);
-                return;
-            }
-            InvokeMethod(buttonName);
+            if (panel != null) TogglePanel(panel);
         }
 
         // ─── Toggle / close panel ───
@@ -114,7 +94,6 @@ namespace CurlingRoyale.UI
             bool willBeActive = !panel.activeSelf;
             if (willBeActive)
             {
-                // Скрываем все остальные панели + их backdrop'ы
                 CloseAllPanelsExcept(panel);
                 panel.SetActive(true);
                 WireCloseButton(panel);
@@ -168,7 +147,7 @@ namespace CurlingRoyale.UI
         }
 
         // ─── Backdrop ───
-        private readonly System.Collections.Generic.Dictionary<GameObject, GameObject> backdrops = new System.Collections.Generic.Dictionary<GameObject, GameObject>();
+        private readonly Dictionary<GameObject, GameObject> backdrops = new Dictionary<GameObject, GameObject>();
 
         void CreateBackdrop(GameObject panel)
         {
@@ -208,13 +187,11 @@ namespace CurlingRoyale.UI
             }
         }
 
-        // ─── Авто-поиск панели по имени кнопки ───
+        // ─── Авто-поиск панели ───
         GameObject FindPanelForButton(string buttonName)
         {
             var all = Resources.FindObjectsOfTypeAll<GameObject>();
-            System.Collections.Generic.List<string> candidates = new System.Collections.Generic.List<string>();
-            candidates.Add(buttonName);
-            candidates.Add(buttonName + "Panel");
+            var candidates = new List<string> { buttonName, buttonName + "Panel" };
             string stripped = buttonName;
             if (stripped.EndsWith("Button")) stripped = stripped.Substring(0, stripped.Length - 6);
             if (stripped != buttonName)
@@ -226,8 +203,7 @@ namespace CurlingRoyale.UI
             {
                 foreach (var go in all)
                 {
-                    if (go == null) continue;
-                    if (go.name != name) continue;
+                    if (go == null || go.name != name) continue;
                     if (!go.scene.IsValid()) continue;
                     if (IsPanel(go)) return go;
                 }
@@ -241,7 +217,7 @@ namespace CurlingRoyale.UI
             return go.GetComponent<Image>() != null;
         }
 
-        System.Collections.Generic.IEnumerable<GameObject> FindAllPanels()
+        IEnumerable<GameObject> FindAllPanels()
         {
             var canvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             foreach (var canvas in canvases)
@@ -256,37 +232,22 @@ namespace CurlingRoyale.UI
             }
         }
 
-        // ─── Вызов метода ───
-        void InvokeMethod(string name)
-        {
-            if (string.IsNullOrEmpty(name)) return;
-            if (TryInvokeMethod($"On{name}")) return;
-            Debug.LogWarning($"[MenuButtonBinder] Метод On{name} не найден ни на этом объекте, ни на fallbackTarget.");
-        }
+        // ─── Публичные методы для Button.OnClick() в Inspector ───
+        // Перетащи MenuButtonBinder GameObject в OnClick(), выбери один из этих методов.
 
-        bool TryInvokeMethod(string methodName)
-        {
-            MethodInfo m = null;
-            if (fallbackTarget != null)
-                m = fallbackTarget.GetType().GetMethod(methodName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-            if (m == null)
-                m = GetType().GetMethod(methodName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-            if (m == null) return false;
-            try { m.Invoke(fallbackTarget != null ? (object)fallbackTarget : this, null); return true; }
-            catch (Exception e) { Debug.LogError($"[MenuButtonBinder] {methodName} failed: {e.Message}"); return false; }
-        }
-
-        // ─── Встроенные методы ───
+        /// <summary>Загрузить игровую сцену.</summary>
         public void OnPlay()
         {
             UnityEngine.SceneManagement.SceneManager.LoadScene("GameScene");
         }
 
+        /// <summary>Переключить fullscreen. Работает только в WebGL билде с fullscreen-template.</summary>
         public void OnFullScreen()
         {
             Screen.fullScreen = !Screen.fullScreen;
         }
 
+        /// <summary>Выйти из игры.</summary>
         public void OnExit()
         {
             Application.Quit();
