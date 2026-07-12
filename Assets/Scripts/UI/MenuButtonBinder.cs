@@ -2,27 +2,30 @@ using System;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 namespace CurlingRoyale.UI
 {
     /// <summary>
-    /// Универсальный биндер кнопок в MainMenu:
-    ///   - Кнопка с именем "X" ищет в сцене панель с именем "X" и переключает её (вкл/выкл).
-    ///   - Если панели нет -- ищет в этом компоненте метод "OnX" и вызывает его.
-    ///   - Панель можно пометить тегом "MenuPanel" (опционально), чтобы не скрывать чужие объекты.
+    /// Универсальный биндер кнопок в MainMenu.
     ///
-    /// Использование:
-    ///   1. Повесить на любой GameObject в MainMenu.
-    ///   2. В Hierarchy создать кнопки: "Play", "Settings", "Skins", "Exit"...
-    ///   3. Если нужна панель -- создать GameObject с тем же именем ("Settings", "Skins"), он автоматически
-    ///      скрывается/показывается по клику.
-    ///   4. Для кнопок без панели добавить методы OnPlay / OnExit в этот класс (или [SerializeField] target).
+    /// Логика для кнопки с именем "X":
+    ///   1. Ищет панель (GameObject c Image, не Button) с именем X. Если нашёл → toggle.
+    ///   2. Если не нашёл — ищет XPanel.
+    ///   3. Если не нашёл — ищет "X" без суффикса "Button" (SettingsButton → Settings).
+    ///   4. Если и это не нашёл — ищет метод "OnX" или "OnY" (где Y = X без "Button").
+    ///   5. Если ничего нет — Debug.LogWarning.
+    ///
+    /// Поведение панели:
+    ///   - При открытии ищет child Button с именем "Close", "CloseButton" или "X" → вешает закрытие.
+    ///   - При открытии создаёт ПОЗАДИ панели полупрозрачный backdrop Image на весь экран.
+    ///     Клик по backdrop → закрывает панель. При закрытии backdrop уничтожается.
     /// </summary>
     [DisallowMultipleComponent]
     public class MenuButtonBinder : MonoBehaviour
     {
         [Header("Куда отправлять кнопки без панели")]
-        [Tooltip("GameObject со скриптом, у которого ищутся методы OnX. Если null -- ищется на этом объекте.")]
+        [Tooltip("MonoBehaviour со скриптом, у которого ищутся методы OnX. Если null -- ищется на этом объекте.")]
         [SerializeField] private MonoBehaviour fallbackTarget;
 
         private void Start()
@@ -30,8 +33,7 @@ namespace CurlingRoyale.UI
             // Скрываем ВСЕ панели при старте -- юзер увидит только корневой UI с кнопками.
             foreach (var panel in FindAllPanels())
             {
-                if (panel == null) continue;
-                panel.SetActive(false);
+                if (panel != null) panel.SetActive(false);
             }
 
             // Привязываем все кнопки в сцене
@@ -46,78 +48,189 @@ namespace CurlingRoyale.UI
 
         void OnButtonClicked(Button btn, string buttonName)
         {
-            // Ищем панель с тем же именем
-            var panel = GameObject.Find(buttonName);
+            GameObject panel = FindPanelForButton(buttonName);
             if (panel != null)
             {
                 TogglePanel(panel);
                 return;
             }
+            InvokeButtonMethod(buttonName);
+        }
 
-            // Панели нет -- вызываем метод OnX
-            InvokeMethod($"On{buttonName}");
+        /// <summary>
+        /// Ищет панель по кнопке. Пробует варианты: name, name + "Panel", name без "Button".
+        /// </summary>
+        GameObject FindPanelForButton(string buttonName)
+        {
+            // Сначала точное совпадение
+            var go = GameObject.Find(buttonName);
+            if (go != null && IsPanel(go)) return go;
+
+            // name + "Panel"
+            go = GameObject.Find(buttonName + "Panel");
+            if (go != null && IsPanel(go)) return go;
+
+            // Имя без суффикса "Button"
+            string stripped = buttonName;
+            if (stripped.EndsWith("Button")) stripped = stripped.Substring(0, stripped.Length - 6);
+            if (stripped != buttonName)
+            {
+                go = GameObject.Find(stripped);
+                if (go != null && IsPanel(go)) return go;
+                go = GameObject.Find(stripped + "Panel");
+                if (go != null && IsPanel(go)) return go;
+            }
+            return null;
+        }
+
+        bool IsPanel(GameObject go)
+        {
+            // Панелью считаем объект с Image, но не кнопку.
+            if (go.GetComponent<Button>() != null) return false;
+            return go.GetComponent<Image>() != null;
         }
 
         void TogglePanel(GameObject panel)
         {
-            // Если панель была включена -- выключаем её, иначе включаем
-            // Но если это единственная активная панель -- оставляем открытой (анти-залипание).
             bool willBeActive = !panel.activeSelf;
             if (willBeActive)
             {
-                // Скрываем все остальные панели
+                // Скрываем все остальные панели + их backdrop'ы
                 foreach (var p in FindAllPanels())
                 {
                     if (p == null || p == panel) continue;
+                    CloseBackdropFor(p);
                     p.SetActive(false);
                 }
+                panel.SetActive(true);
+                WireCloseButton(panel);
+                CreateBackdrop(panel);
             }
-            panel.SetActive(willBeActive);
+            else
+            {
+                CloseBackdropFor(panel);
+                panel.SetActive(false);
+            }
         }
 
-        void InvokeMethod(string methodName)
+        void WireCloseButton(GameObject panel)
         {
-            // Сначала на fallbackTarget, потом на этом объекте
+            // Ищем child Button с именем "Close" / "CloseButton" / "X" / "Back"
+            var buttons = panel.GetComponentsInChildren<Button>(true);
+            foreach (var btn in buttons)
+            {
+                if (btn == null) continue;
+                string n = btn.gameObject.name.ToLower();
+                if (n == "close" || n == "closebutton" || n == "x" || n == "back" || n.Contains("close"))
+                {
+                    btn.onClick.RemoveAllListeners();
+                    btn.onClick.AddListener(() => {
+                        CloseBackdropFor(panel);
+                        panel.SetActive(false);
+                    });
+                }
+            }
+        }
+
+        // ─── Backdrop (click-outside) ───
+        // Привязываем backdrop → panel чтобы при закрытии знать, что удалять.
+        private readonly System.Collections.Generic.Dictionary<GameObject, GameObject> backdrops = new System.Collections.Generic.Dictionary<GameObject, GameObject>();
+
+        void CreateBackdrop(GameObject panel)
+        {
+            if (backdrops.ContainsKey(panel)) return;
+            var canvas = panel.GetComponentInParent<Canvas>();
+            if (canvas == null) return;
+
+            var go = new GameObject("Backdrop_" + panel.name,
+                typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+            go.transform.SetParent(canvas.transform, false);
+            go.transform.SetAsFirstSibling();  // под панелью (но в том же Canvas)
+
+            var rt = (RectTransform)go.transform;
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+
+            var img = go.GetComponent<Image>();
+            img.color = new Color(0, 0, 0, 0.4f);
+
+            var btn = go.GetComponent<Button>();
+            btn.onClick.AddListener(() => {
+                CloseBackdropFor(panel);
+                panel.SetActive(false);
+            });
+
+            backdrops[panel] = go;
+        }
+
+        void CloseBackdropFor(GameObject panel)
+        {
+            if (backdrops.TryGetValue(panel, out var bg))
+            {
+                if (bg != null) Destroy(bg);
+                backdrops.Remove(panel);
+            }
+        }
+
+        // ─── Метод по кнопке ───
+        void InvokeButtonMethod(string buttonName)
+        {
+            // Пробуем варианты имени
+            string[] candidates = { buttonName };
+            if (buttonName.EndsWith("Button"))
+                candidates = new[] { buttonName, buttonName.Substring(0, buttonName.Length - 6) };
+            else
+                candidates = new[] { buttonName, buttonName + "Button" };
+
+            foreach (var name in candidates)
+            {
+                if (TryInvokeMethod($"On{name}")) return;
+            }
+            Debug.LogWarning($"[MenuButtonBinder] Кнопка '{buttonName}': нет панели и нет метода On{buttonName} (или On{StripButtonSuffix(buttonName)}).");
+        }
+
+        bool TryInvokeMethod(string methodName)
+        {
             MethodInfo m = null;
             if (fallbackTarget != null)
                 m = fallbackTarget.GetType().GetMethod(methodName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             if (m == null)
                 m = GetType().GetMethod(methodName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-            if (m != null)
-            {
-                try { m.Invoke(fallbackTarget != null ? (object)fallbackTarget : this, null); }
-                catch (Exception e) { Debug.LogError($"[MenuButtonBinder] {methodName} failed: {e.Message}"); }
-            }
-            else
-            {
-                Debug.LogWarning($"[MenuButtonBinder] Button '{methodName.Substring(2)}' has no panel and no method '{methodName}'.");
-            }
+            if (m == null) return false;
+            try { m.Invoke(fallbackTarget != null ? (object)fallbackTarget : this, null); return true; }
+            catch (Exception e) { Debug.LogError($"[MenuButtonBinder] {methodName} failed: {e.Message}"); return false; }
+        }
+
+        string StripButtonSuffix(string s)
+        {
+            return s.EndsWith("Button") ? s.Substring(0, s.Length - 6) : s;
         }
 
         System.Collections.Generic.IEnumerable<GameObject> FindAllPanels()
         {
-            // "Панелью" считаем любой GameObject, у которого есть Image и он НЕ является кнопкой.
-            // Чтобы не задеть лишнего, ищем только среди детей Canvas.
+            // Панель -- любой GameObject на Canvas с Image, но НЕ Button.
             var canvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             foreach (var canvas in canvases)
             {
-                var panels = canvas.GetComponentsInChildren<RectTransform>(true);
-                foreach (var rt in panels)
+                var images = canvas.GetComponentsInChildren<Image>(true);
+                foreach (var img in images)
                 {
-                    var go = rt.gameObject;
-                    if (go.GetComponent<Button>() != null) continue;  // пропускаем кнопки
-                    if (go.GetComponent<Image>() == null) continue; // пропускаем объекты без Image
-                    if (go.transform.childCount > 0) continue;      // пропускаем контейнеры с детьми (это группы)
+                    var go = img.gameObject;
+                    if (go.GetComponent<Button>() != null) continue;
                     yield return go;
                 }
             }
         }
 
-        // ─── Методы по умолчанию (если ни одна панель не подошла) ───
+        // ─── Встроенные методы для базовых кнопок ───
         public void OnPlay()
         {
             UnityEngine.SceneManagement.SceneManager.LoadScene("GameScene");
         }
+
+        public void OnPlayButton() => OnPlay();
 
         public void OnFullScreen()
         {
@@ -126,6 +239,8 @@ namespace CurlingRoyale.UI
             Screen.fullScreen = !Screen.fullScreen;
         }
 
+        public void OnFullScreenButton() => OnFullScreen();
+
         public void OnExit()
         {
             Application.Quit();
@@ -133,5 +248,7 @@ namespace CurlingRoyale.UI
             UnityEditor.EditorApplication.isPlaying = false;
 #endif
         }
+
+        public void OnExitButton() => OnExit();
     }
 }
