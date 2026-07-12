@@ -62,25 +62,41 @@ namespace CurlingRoyale.UI
         /// </summary>
         GameObject FindPanelForButton(string buttonName)
         {
-            // Сначала точное совпадение
-            var go = GameObject.Find(buttonName);
-            if (go != null && IsPanel(go)) return go;
+            // Собираем ВСЕ GameObject (включая неактивные) и ищем подходящий.
+            // GameObject.Find() НЕ находит скрытые объекты, поэтому используем Resources.FindObjectsOfTypeAll.
+            var all = Resources.FindObjectsOfTypeAll<GameObject>();
 
-            // name + "Panel"
-            go = GameObject.Find(buttonName + "Panel");
-            if (go != null && IsPanel(go)) return go;
-
-            // Имя без суффикса "Button"
+            // Пробуем варианты имён по приоритету
+            System.Collections.Generic.List<string> candidates = new System.Collections.Generic.List<string>();
+            candidates.Add(buttonName);
+            candidates.Add(buttonName + "Panel");
             string stripped = buttonName;
             if (stripped.EndsWith("Button")) stripped = stripped.Substring(0, stripped.Length - 6);
             if (stripped != buttonName)
             {
-                go = GameObject.Find(stripped);
-                if (go != null && IsPanel(go)) return go;
-                go = GameObject.Find(stripped + "Panel");
-                if (go != null && IsPanel(go)) return go;
+                candidates.Add(stripped);
+                candidates.Add(stripped + "Panel");
+            }
+
+            foreach (var name in candidates)
+            {
+                foreach (var go in all)
+                {
+                    if (go == null) continue;
+                    if (go.name != name) continue;
+                    // Пропускаем префабы из Project
+                    if (EditorOnly_HideInGame(go)) continue;
+                    if (IsPanel(go)) return go;
+                }
             }
             return null;
+        }
+
+        bool EditorOnly_HideInGame(GameObject go)
+        {
+            // Resources.FindObjectsOfTypeAll включает и ассеты, не только scene objects.
+            // Пропускаем те, что не на сцене.
+            return !go.scene.IsValid();
         }
 
         bool IsPanel(GameObject go)
