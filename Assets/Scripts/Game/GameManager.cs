@@ -140,6 +140,50 @@ namespace CurlingRoyale.Game
         public void EndMatch(int winnerId = -1) => ChangeState(MatchState.MatchEnd);
         public void ReturnToMenu() => ChangeState(MatchState.Menu);
 
+        // ─── Кнопки UI (для OnClick в Inspector) ───
+
+        /// <summary>Перезапустить матч (из MatchEnd → MatchStart).</summary>
+        public void Restart()
+        {
+            if (State == MatchState.MatchEnd || State == MatchState.InProgress || State == MatchState.MatchStart)
+            {
+                StartMatch();
+            }
+        }
+
+        /// <summary>Поставить матч на паузу.</summary>
+        public void Pause()
+        {
+            if (State == MatchState.InProgress)
+            {
+                ChangeState(MatchState.Paused);
+                Time.timeScale = 0f;
+            }
+        }
+
+        /// <summary>Снять с паузы (alias для Continue).</summary>
+        public void Resume()
+        {
+            if (State == MatchState.Paused)
+            {
+                Time.timeScale = 1f;
+                ChangeState(MatchState.InProgress);
+            }
+        }
+
+        /// <summary>Снять с паузы (alias).</summary>
+        public void Continue() => Resume();
+
+        /// <summary>Вернуться в главное меню (загрузить MainMenu сцену).</summary>
+        public void GoHome()
+        {
+            Time.timeScale = 1f;
+            UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
+        }
+
+        /// <summary>Вернуться в главное меню (alias).</summary>
+        public void Home() => GoHome();
+
         private void EnterInProgress()
         {
             lastPhaseStartTime = Time.time;
