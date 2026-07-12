@@ -4,8 +4,11 @@ namespace CurlingRoyale.Audio
 {
     /// <summary>
     /// Менеджер фоновой музыки.
-    /// Кинь на любой GameObject в первой сцене (например, GameManager).
-    /// DontDestroyOnLoad -- живёт между сценами.
+    /// Кинь на любой GameObject в нужной сцене (MainMenu, GameScene, ...).
+    /// НЕ ставим DontDestroyOnLoad -- каждая сцена имеет свой MusicManager
+    /// с префиксом trackNamePrefix (Theme_Menu_, Theme_Midcore_, и т.д.).
+    /// При переходе между сценами MM уничтожается вместе со сценой, и новая сцена
+    /// создаёт свой MM с правильным треком.
     /// Если musicClips задан через inspector -- играет их в случайном порядке с shuffle.
     /// Иначе пытается Resources.LoadAll\&lt;AudioClip\&gt;("Audio").
     /// </summary>
@@ -46,7 +49,9 @@ namespace CurlingRoyale.Audio
                 return;
             }
             Instance = this;
-            DontDestroyOnLoad(gameObject);
+            // НЕ ставим DontDestroyOnLoad -- каждая сцена имеет свой MusicManager с треком под неё.
+            // При переходе MainMenu -> GameScene MM главного меню уничтожается,
+            // и GameScene создаёт свой с правильным треком.
 
             source = GetComponent<AudioSource>();
             if (source == null)
