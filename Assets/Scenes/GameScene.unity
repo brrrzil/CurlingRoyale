@@ -663,7 +663,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 341085511}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 652395699}
+        m_TargetAssemblyTypeName: CurlingRoyale.Game.GameManager, Assembly-CSharp
+        m_MethodName: Restart
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &341085511
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1386,7 +1398,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1035345230}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 652395699}
+        m_TargetAssemblyTypeName: CurlingRoyale.Game.GameManager, Assembly-CSharp
+        m_MethodName: Continue
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1035345230
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1692,7 +1716,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1506060938}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 652395699}
+        m_TargetAssemblyTypeName: CurlingRoyale.Game.GameManager, Assembly-CSharp
+        m_MethodName: Restart
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1506060938
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1808,114 +1844,11 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1565630640}
   m_CullTransparentMesh: 1
---- !u!1 &1629848963
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1629848965}
-  - component: {fileID: 1629848964}
-  - component: {fileID: 1629848966}
-  m_Layer: 0
-  m_Name: Arena
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!212 &1629848964
-SpriteRenderer:
-  serializedVersion: 2
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1629848963}
-  m_Enabled: 1
-  m_CastShadows: 0
-  m_ReceiveShadows: 0
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 0
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 0
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: -20
-  m_MaskInteraction: 0
-  m_Sprite: {fileID: 463107238167332334, guid: 143b1180b423f93459aed1a0ec2d2eb7, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_FlipX: 0
-  m_FlipY: 0
-  m_DrawMode: 0
-  m_Size: {x: 1, y: 1}
-  m_AdaptiveModeThreshold: 0.5
-  m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
-  m_SpriteSortPoint: 0
---- !u!4 &1629848965
+--- !u!4 &1629848965 stripped
 Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 8417663334439993784, guid: 633b680f2ad9b03439243a2d8b36d6b1, type: 3}
+  m_PrefabInstance: {fileID: 3489532223353925368}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1629848963}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.025, y: 1.025, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1937041651}
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1629848966
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1629848963}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1c335e355544aa0419fbbb7cb7fc7822, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CurlingRoyale.Arena.ArenaScaler
-  config: {fileID: 11400000, guid: 4043a8961accedc498b9e2aec81b1d95, type: 2}
-  target: {fileID: 0}
-  baseRadius: 5
 --- !u!1 &1649964203
 GameObject:
   m_ObjectHideFlags: 0
@@ -1998,7 +1931,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1649964206}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 652395699}
+        m_TargetAssemblyTypeName: CurlingRoyale.Game.GameManager, Assembly-CSharp
+        m_MethodName: Home
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1649964206
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2186,7 +2131,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1846787117
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2247,127 +2192,17 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1846787116}
   m_CullTransparentMesh: 1
---- !u!1 &1937041650
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1937041651}
-  - component: {fileID: 1937041653}
-  - component: {fileID: 1937041652}
-  m_Layer: 0
-  m_Name: ArenaBorder
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1937041651
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1937041650}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1629848965}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1937041652
+--- !u!114 &1937041652 stripped
 MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 7468933877507839465, guid: 633b680f2ad9b03439243a2d8b36d6b1, type: 3}
+  m_PrefabInstance: {fileID: 3489532223353925368}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1937041650}
+  m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 783d0bb3233fa5043ac03456ad651a5e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  config: {fileID: 11400000, guid: 4043a8961accedc498b9e2aec81b1d95, type: 2}
-  currentRadius: 5.125
---- !u!68 &1937041653
-EdgeCollider2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1937041650}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Density: 1
-  m_Material: {fileID: 6200000, guid: d504d3f055e62334489be3660caf9c7a, type: 2}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ForceSendLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ForceReceiveLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ContactCaptureLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_CallbackLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_IsTrigger: 0
-  m_UsedByEffector: 0
-  m_CompositeOperation: 0
-  m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
-  m_EdgeRadius: 0.1
-  m_Points:
-  - {x: 1, y: 0}
-  - {x: 0.98078525, y: 0.19509032}
-  - {x: 0.9238795, y: 0.38268346}
-  - {x: 0.8314696, y: 0.55557024}
-  - {x: 0.70710677, y: 0.70710677}
-  - {x: 0.5555702, y: 0.83146966}
-  - {x: 0.38268343, y: 0.9238795}
-  - {x: 0.19509023, y: 0.9807853}
-  - {x: -0.00000004371139, y: 1}
-  - {x: -0.19509032, y: 0.98078525}
-  - {x: -0.38268352, y: 0.9238795}
-  - {x: -0.55557036, y: 0.83146954}
-  - {x: -0.70710677, y: 0.70710677}
-  - {x: -0.83146966, y: 0.5555702}
-  - {x: -0.9238796, y: 0.38268328}
-  - {x: -0.9807853, y: 0.19509031}
-  - {x: -1, y: -0.00000008742278}
-  - {x: -0.98078525, y: -0.19509049}
-  - {x: -0.9238795, y: -0.38268343}
-  - {x: -0.83146954, y: -0.5555703}
-  - {x: -0.70710665, y: -0.7071069}
-  - {x: -0.55557, y: -0.8314698}
-  - {x: -0.38268313, y: -0.9238797}
-  - {x: -0.19509038, y: -0.98078525}
-  - {x: 0.000000011924881, y: -1}
-  - {x: 0.19509041, y: -0.98078525}
-  - {x: 0.3826836, y: -0.92387944}
-  - {x: 0.5555704, y: -0.8314695}
-  - {x: 0.707107, y: -0.70710653}
-  - {x: 0.8314696, y: -0.5555703}
-  - {x: 0.92387956, y: -0.38268343}
-  - {x: 0.9807853, y: -0.19509023}
-  - {x: 1, y: 0.00000017484555}
-  m_AdjacentStartPoint: {x: 0, y: 0}
-  m_AdjacentEndPoint: {x: 0, y: 0}
-  m_UseAdjacentStartPoint: 0
-  m_UseAdjacentEndPoint: 0
 --- !u!1 &1984228056
 GameObject:
   m_ObjectHideFlags: 0
@@ -2554,7 +2389,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2038676344}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 652395699}
+        m_TargetAssemblyTypeName: CurlingRoyale.Game.GameManager, Assembly-CSharp
+        m_MethodName: Pause
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &2038676344
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2694,6 +2541,63 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 04f91fb1a996b404eb838f6f779ebbe5, type: 3}
+--- !u!1001 &3489532223353925368
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 8417663334439993784, guid: 633b680f2ad9b03439243a2d8b36d6b1, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8417663334439993784, guid: 633b680f2ad9b03439243a2d8b36d6b1, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8417663334439993784, guid: 633b680f2ad9b03439243a2d8b36d6b1, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8417663334439993784, guid: 633b680f2ad9b03439243a2d8b36d6b1, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8417663334439993784, guid: 633b680f2ad9b03439243a2d8b36d6b1, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8417663334439993784, guid: 633b680f2ad9b03439243a2d8b36d6b1, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8417663334439993784, guid: 633b680f2ad9b03439243a2d8b36d6b1, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8417663334439993784, guid: 633b680f2ad9b03439243a2d8b36d6b1, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8417663334439993784, guid: 633b680f2ad9b03439243a2d8b36d6b1, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8417663334439993784, guid: 633b680f2ad9b03439243a2d8b36d6b1, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8445193202761095969, guid: 633b680f2ad9b03439243a2d8b36d6b1, type: 3}
+      propertyPath: m_Name
+      value: Arena
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 633b680f2ad9b03439243a2d8b36d6b1, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -2703,7 +2607,7 @@ SceneRoots:
   - {fileID: 652395698}
   - {fileID: 1735535424}
   - {fileID: 1488976301}
-  - {fileID: 1629848965}
+  - {fileID: 3489532223353925368}
   - {fileID: 1697547906}
   - {fileID: 1043750121152314365}
   - {fileID: 182136927}
